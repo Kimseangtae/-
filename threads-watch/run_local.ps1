@@ -10,7 +10,7 @@ $log = Join-Path $logDir ("{0}.log" -f (Get-Date -Format "yyyy-MM-dd_HHmm"))
 "== $(Get-Date) 시작" | Tee-Object -FilePath $log -Append
 git pull --ff-only 2>&1 | Tee-Object -FilePath $log -Append
 
-$prompt = "threads-watch 스킬(.claude/skills/threads-watch/SKILL.md)의 실행 순서를 1번부터 6번까지 그대로 수행해라. 새 글이 없으면 한 줄만 남기고 끝내라. 새 글이 있으면 보고서를 threads-watch/reports/ 에 저장하고 커밋·푸시까지 마쳐라. 마지막에 차용 판정 요약 표와 1순위 적용안 전문을 출력해라. 파이썬은 python 명령을 써라."
+$prompt = "threads-watch 스킬(.claude/skills/threads-watch/SKILL.md)의 실행 순서를 1번부터 7번까지 그대로 수행해라. 새 글마다 fetch_thread_full.py 로 답글까지 가져와라. 새 글이 없으면 한 줄만 남기고 끝내라. 새 글이 있으면 메소드 보고서를 threads-watch/reports/ 에 저장하고 methods.md 를 갱신하고 커밋·푸시까지 마쳐라. 마지막에 판정 표와 실행 과제를 출력해라. 파이썬은 python 명령을 써라."
 
 claude -p $prompt `
   --permission-mode acceptEdits `
