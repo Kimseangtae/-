@@ -1,0 +1,4 @@
+{
+  "_설명": "감시할 스레드 채널 목록. handle 은 @ 없이. enabled 를 false 로 두면 건너뜀. memo 는 왜 보는지 한 줄.",
+  "channels": []
+}
