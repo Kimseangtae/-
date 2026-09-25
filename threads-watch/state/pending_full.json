@@ -1,0 +1,26 @@
+{
+  "_설명": "답글을 못 읽고 분석한 글. PC 에서 --pending 으로 답글을 받으면 재분석 대상이 된다.",
+  "pending": [
+    {
+      "code": "DdrOgaVGCvA",
+      "url": "https://www.threads.com/t/DdrOgaVGCvA",
+      "reason": "답글 미수집(클라우드 첫 실행)",
+      "report": "threads-watch/reports/2026-09-25.md",
+      "added_kst": "2026-09-25T14:23:28+09:00"
+    },
+    {
+      "code": "Ddq5HdwG2DS",
+      "url": "https://www.threads.com/t/Ddq5HdwG2DS",
+      "reason": "답글 미수집(클라우드 첫 실행)",
+      "report": "threads-watch/reports/2026-09-25.md",
+      "added_kst": "2026-09-25T14:23:28+09:00"
+    },
+    {
+      "code": "Ddq0JrSGDzX",
+      "url": "https://www.threads.com/t/Ddq0JrSGDzX",
+      "reason": "답글 미수집(클라우드 첫 실행)",
+      "report": "threads-watch/reports/2026-09-25.md",
+      "added_kst": "2026-09-25T14:23:28+09:00"
+    }
+  ]
+}

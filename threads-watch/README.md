@@ -16,6 +16,7 @@
 | `fetch_threads.py` | 새 글 목록 (RSS, 로그인 불필요) + 본 글 기록 |
 | `fetch_thread_full.py` | 글 하나의 본문 + 작성자 답글 전체 (로그인 프로필 사용) → `raw/` |
 | `state/seen.json` | 이미 본 글 ID (자동) |
+| `state/pending_full.json` | 답글 없이 분석한 글의 재검토 대기 목록. PC 에서 답글이 읽히면 자동 재분석 |
 | `raw/` | 글별 원문 저장 |
 | `reports/` | 날짜별 메소드 보고서 |
 | `methods.md` | "지금 적용" 메소드 누적 목록과 실행 상태 |
@@ -50,6 +51,12 @@ PC 안에만 저장되고 git 에는 올라가지 않는다.
 
 ## 채널 추가
 `channels.json` 의 `channels` 에 `{ "handle": "핸들", "enabled": true, "memo": "왜 보는지" }` 추가. `@` 없이.
+
+## 답글을 못 읽고 분석한 글은 어떻게 되나
+클라우드 실행이나 로그인 만료로 답글 없이 분석한 글은 `state/pending_full.json` 에 자동 등록된다.
+다음에 PC 에서 스킬을 돌리면 맨 먼저 `fetch_thread_full.py --pending` 이 답글을 받아오고,
+답글이 잡힌 글은 처음부터 다시 분석해 원래 보고서 맨 아래 "재검토" 섹션과 `methods.md` 를 갱신한다.
+본문만 보고 내린 판정은 임시로 취급한다.
 
 ## 한계
 - 좋아요·답글 수 등 반응 수치는 가져오지 않는다.

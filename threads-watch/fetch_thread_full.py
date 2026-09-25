@@ -11,6 +11,8 @@ git 에 올라가지 않음)을 쓴다. 처음 한 번:
 
     python3 fetch_thread_full.py https://www.threads.com/t/XXXX
     python3 fetch_thread_full.py https://www.threads.com/t/XXXX --json
+    python3 fetch_thread_full.py --add https://www.threads.com/t/XXXX --report threads-watch/reports/2026-09-25.md
+    python3 fetch_thread_full.py --pending    # 대기 글 전부 받기 → 답글 잡힌 글은 재분석 대상으로 출력
 
 준비물: pip install playwright && python3 -m playwright install chromium
 
@@ -31,6 +33,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PROFILE_DIR = HERE / ".browser-profile"
 RAW_DIR = HERE / "raw"
+PENDING_FILE = HERE / "state" / "pending_full.json"
 KST = timezone(timedelta(hours=9))
 
 
@@ -166,6 +169,60 @@ def fetch(url: str, headless: bool = True, wait_ms: int = 6000) -> dict:
     }
 
 
+def load_pending() -> list:
+    if not PENDING_FILE.exists():
+        return []
+    return json.loads(PENDING_FILE.read_text(encoding="utf-8")).get("pending", [])
+
+
+def save_pending(items: list) -> None:
+    PENDING_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PENDING_FILE.write_text(
+        json.dumps({"_설명": "답글을 못 읽고 분석한 글. PC 에서 --pending 으로 답글을 받으면 재분석 대상이 된다.", "pending": items},
+                   ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def add_pending(url: str, reason: str, report: str = "") -> None:
+    items = load_pending()
+    code = post_code(url)
+    if any(x.get("code") == code for x in items):
+        return
+    items.append({"code": code, "url": url, "reason": reason, "report": report,
+                  "added_kst": datetime.now(KST).isoformat(timespec="seconds")})
+    save_pending(items)
+
+
+def run_pending(headless: bool = True) -> int:
+    """대기 목록의 글을 전부 받아 raw/ 에 저장한다. 답글이 실제로 잡힌 글만 목록에서 뺀다."""
+    items = load_pending()
+    if not items:
+        print("재검토 대기 글 없음")
+        return 0
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    done, kept = [], []
+    for it in items:
+        try:
+            d = fetch(it["url"], headless=headless)
+        except SystemExit:
+            raise
+        except Exception as e:  # 네트워크·렌더링 오류는 다음 기회로
+            print(f"[warn] {it['code']}: {e}", file=sys.stderr)
+            kept.append(it)
+            continue
+        (RAW_DIR / f"{d['code']}.md").write_text(to_markdown(d), encoding="utf-8")
+        replies = [x for x in d["author_thread"] if x["code"] != d["code"]]
+        if replies:
+            done.append({**it, "replies": len(replies), "raw": f"threads-watch/raw/{d['code']}.md"})
+        else:
+            kept.append(it)
+            print(f"[warn] {it['code']}: 작성자 답글이 잡히지 않음 (로그인 만료면 --login)", file=sys.stderr)
+    save_pending(kept)
+    print(json.dumps({"reanalyze": done, "still_pending": kept}, ensure_ascii=False, indent=2))
+    return 0
+
+
 def to_markdown(d: dict) -> str:
     lines = [f"# @{d['author'] or '?'} · {d['code']}", "", f"URL: {d['url']}", f"수집: {d['fetched_at_kst']}", ""]
     if d["author_thread"]:
@@ -192,7 +249,18 @@ def main() -> int:
     ap.add_argument("--login", action="store_true", help="브라우저를 열어 로그인 프로필을 만든다")
     ap.add_argument("--json", action="store_true", help="마크다운 대신 JSON 출력")
     ap.add_argument("--show", action="store_true", help="브라우저 창을 보이게 실행")
+    ap.add_argument("--pending", action="store_true", help="재검토 대기 글을 전부 받아온다 (답글 잡힌 글만 목록에서 제거)")
+    ap.add_argument("--add", metavar="URL", help="답글 없이 분석한 글을 재검토 대기 목록에 넣는다")
+    ap.add_argument("--reason", default="답글 미수집", help="--add 사유")
+    ap.add_argument("--report", default="", help="--add 시 원래 보고서 경로")
     args = ap.parse_args()
+
+    if args.add:
+        add_pending(args.add, args.reason, args.report)
+        print(f"대기 목록 추가: {post_code(args.add)}  (총 {len(load_pending())}건)")
+        return 0
+    if args.pending:
+        return run_pending(headless=not args.show)
 
     if args.login:
         login()
