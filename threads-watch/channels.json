@@ -1,4 +1,6 @@
 {
   "_설명": "감시할 스레드 채널 목록. handle 은 @ 없이. enabled 를 false 로 두면 건너뜀. memo 는 왜 보는지 한 줄.",
-  "channels": []
+  "channels": [
+    { "handle": "binx_lab", "enabled": true, "memo": "빈이형. 권위 인물 인용 + 숫자 리스트 카드 형식의 자기계발·사업 정보 계정. 훅 구조 차용용." }
+  ]
 }
