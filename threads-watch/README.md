@@ -26,9 +26,35 @@ python3 threads-watch/fetch_threads.py --mark           # 새 글 출력 + 기�
 ```
 그다음 Claude Code 에서 "스레드 감시 돌려줘" 라고 하면 SKILL.md 절차대로 보고서를 만든다.
 
-## 자동 실행
-Claude Code Routine(예약 실행)이 정해진 시각에 새 세션을 열어 위 절차를 수행하고
-`reports/` 에 커밋·푸시한다. 주기 변경은 Routine 설정에서.
+## 데스크톱 PC 에서 자동 실행
+
+준비물: git, Python 3.10 이상, Claude Code CLI(`claude` 명령, 로그인 완료). 추가 파이썬 패키지는 필요 없다.
+
+1. 저장소 받기 (폴더 이름은 자유)
+   ```bash
+   git clone https://github.com/Kimseangtae/-.git robyn-threads
+   cd robyn-threads
+   ```
+2. `threads-watch/channels.json` 에 감시 채널 추가.
+3. 한 번 수동으로 돌려 확인
+   - macOS: `bash threads-watch/run_local.sh`
+   - Windows(PowerShell): `powershell -ExecutionPolicy Bypass -File threads-watch\run_local.ps1`
+4. 예약 등록
+   - **macOS**: 터미널에서 `crontab -e` 후 아래 한 줄 추가 (매일 08:00).
+     `0 8 * * * /bin/bash /Users/사용자이름/robyn-threads/threads-watch/run_local.sh`
+     경로는 실제 클론 위치로. PC 가 잠자기 상태면 실행되지 않으니 시스템 설정에서 예약 깨우기를 켠다.
+   - **Windows**: 작업 스케줄러 → 기본 작업 만들기 → 트리거 "매일 08:00" → 동작 "프로그램 시작"
+     프로그램: `powershell.exe`
+     인수: `-ExecutionPolicy Bypass -File "C:\Users\사용자이름\robyn-threads\threads-watch\run_local.ps1"`
+     조건 탭에서 "작업을 실행하기 위해 컴퓨터의 절전 모드 종료" 체크.
+5. 결과 확인: `threads-watch/reports/` 의 날짜 파일, 실행 기록은 `threads-watch/logs/`.
+
+스크립트는 최신 코드를 받고(git pull), Claude Code 에 스킬 절차 실행을 지시하고, 보고서를 커밋·푸시한다.
+푸시가 되면 스마트폰에서도 GitHub 앱이나 브라우저로 보고서를 읽을 수 있다.
+
+## 클라우드에서 자동 실행 (대안)
+PC 를 켜두기 어렵다면 Claude Code Routine(예약 실행)이 정해진 시각에 클라우드 세션을 열어 같은 절차를 수행하고
+`reports/` 에 커밋·푸시한다. 둘 중 하나만 켠다. 둘 다 켜면 같은 글을 두 번 분석한다.
 
 ## 데이터 출처와 한계
 - 글 텍스트·게시 시각·URL 은 공개 RSSHub 미러(`fetch_threads.py` 의 `MIRRORS`)에서 가져온다.
