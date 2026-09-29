@@ -4,10 +4,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import theme_menu as tm
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from robin_workbench import theme_menu as tm  # noqa: E402
 
 HERE = Path(__file__).parent
-EXAMPLE = HERE / "예시_메뉴후보.csv"
+EXAMPLE = HERE / "예시_테마메뉴후보.csv"
 
 
 def write(text: str, enc: str = "utf-8") -> Path:
