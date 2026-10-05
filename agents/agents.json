@@ -1,0 +1,8 @@
+{
+  "_설명": "사무실 PC 명단. name 은 각 PC 에서 `hostname` 을 쳤을 때 나오는 컴퓨터 이름과 똑같이. repo_path 는 그 PC 에 저장소를 클론한 폴더.",
+  "central": { "name": "PC-MAIN", "repo_path": "C:\\Users\\robyn\\robyn-threads", "memo": "중앙 제어. 작업을 넣고(dispatch) 결과를 본다(status). 이 PC 도 worker 를 같이 돌려도 된다." },
+  "workers": [
+    { "name": "PC-EDIT", "repo_path": "C:\\Users\\robyn\\robyn-threads", "memo": "편집 PC. 스레드 로그인 프로필이 있는 PC. 셀렉츠·프리미어." },
+    { "name": "PC-SUB",  "repo_path": "C:\\Users\\robyn\\robyn-threads", "memo": "보조 PC. 글쓰기·조사·오래 걸리는 분석." }
+  ]
+}
