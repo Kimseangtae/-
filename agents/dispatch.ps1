@@ -5,6 +5,8 @@ agents/dispatch.ps1 — 중앙 PC 에서 작업을 큐에 넣는다. 작업 파�
     powershell -ExecutionPolicy Bypass -File agents\dispatch.ps1 -To PC-EDIT -Title "threads-watch" -PromptFile agents\prompts\threads-watch.txt -AllowedTools "Read,Write,Edit,Glob,Grep,WebFetch,Bash(python *),Bash(git *)"
   예) 아무 PC 나 먼저 노는 PC 에 글쓰기:
     powershell -ExecutionPolicy Bypass -File agents\dispatch.ps1 -Title "쇼츠 설명글" -Prompt "..."
+  예) Codex CLI 로 실행 (PC 에 codex 설치·로그인 필요):
+    powershell -ExecutionPolicy Bypass -File agents\dispatch.ps1 -To PC-SUB -Agent codex -Title "코드 점검" -Prompt "..."
   예) Claude 없이 파이썬 스크립트만:
     powershell -ExecutionPolicy Bypass -File agents\dispatch.ps1 -To PC-SUB -Title "원본 변환" -Command "python tools\convert.py D:\원본" -TimeoutMin 180
 #>
@@ -12,6 +14,8 @@ param(
   [string]$Prompt,
   [string]$PromptFile,
   [string]$Command,
+  [ValidateSet("claude", "codex")][string]$Agent = "claude",
+  [ValidateSet("read-only", "workspace-write", "danger-full-access")][string]$Sandbox = "workspace-write",
   [string]$To = "any",
   [string]$Title = "task",
   [string]$Cwd = ".",
@@ -63,6 +67,10 @@ if ($Command) {
   $task.prompt          = $Prompt.TrimEnd()
   $task.allowed_tools   = $AllowedTools
   $task.permission_mode = $PermissionMode
+  if ($Agent -eq "codex") {
+    $task.agent   = "codex"
+    $task.sandbox = $Sandbox
+  }
 }
 
 $json = $task | ConvertTo-Json -Depth 8

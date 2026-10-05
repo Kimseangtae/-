@@ -53,8 +53,9 @@
 | `prompts/*.txt` | 공통 | 자주 쓰는 긴 프롬프트 |
 | `tasks/queue, running, done, failed` | 공통 | 작업 상태별 폴더. 작업 = JSON 1개, 결과 = 같은 이름의 md |
 
-작업은 두 종류입니다.
+작업은 세 종류입니다.
 - **prompt 작업**: Claude Code 에 프롬프트를 넘긴다 (`claude -p`). 스레드 분석, 글쓰기, 조사.
+- **codex 작업**: 같은 프롬프트를 Codex CLI 에 넘긴다 (`codex exec`). `dispatch.ps1` 에 `-Agent codex`.
 - **command 작업**: PowerShell 명령을 그대로 실행한다. 파이썬 스크립트, 인코딩, 파일 정리.
 
 ## 4. 설치 (PC 마다 한 번, 15분)
@@ -168,3 +169,25 @@ Register-ScheduledTask -TaskName "RobynDispatch-threads-watch" -Action $a -Trigg
 로그인 프로필이나 로컬 파일이 필요 없는 작업(글쓰기, 조사, 보고서 정리)은 PC 큐에 넣지 않아도 된다.
 Claude Code 클라우드 세션의 예약 실행(Routine)이 저장소를 직접 받아 돌리고 push 한다. PC 가 전부 꺼져 있어도 된다.
 PC 큐는 **로컬 자원이 필요한 작업**(스레드 로그인, 영상 원본, 셀렉츠·프리미어, GPU) 전용으로 두면 역할이 깔끔하다.
+
+## 11. Codex CLI 연결
+
+Claude 대신 Codex CLI 로 돌리고 싶은 작업은 `-Agent codex` 만 붙이면 됩니다. 큐·선점·재시도·시간 제한은 그대로입니다.
+
+**PC 마다 한 번** (Node.js 18 이상):
+```powershell
+npm install -g @openai/codex
+codex login
+```
+`codex login` 은 브라우저로 ChatGPT 계정에 로그인합니다. 로그인은 PC 마다 따로입니다.
+
+**넣는 법**
+```powershell
+powershell -ExecutionPolicy Bypass -File agents\dispatch.ps1 -To PC-SUB -Agent codex -Title "코드 점검" -Prompt "agents 폴더 스크립트의 버그를 찾아 보고서로 정리" -Sandbox read-only
+```
+`-Sandbox` 는 `read-only` / `workspace-write`(기본) / `danger-full-access`.
+
+**한계**
+- `workspace-write` 는 저장소 안 파일 수정만 허용하고 기본적으로 외부 네트워크를 막습니다. 그래서 작업이 직접 `git push` 하는 건 안 됩니다. 결과는 `done/<id>.md` 의 출력 전문으로 받으세요.
+- Claude 용 `-AllowedTools`, `-PermissionMode` 는 codex 작업에서는 무시됩니다.
+- 로그아웃되면 그 PC 의 codex 작업이 `failed/` 로 떨어집니다. 그 PC 에서 `codex login` 을 다시 하세요.
