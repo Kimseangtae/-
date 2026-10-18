@@ -596,6 +596,12 @@ def main() -> int:
     if args.whoami:
         return whoami()
     if args.check:
+        missing = [k for k in ("IG_ACCESS_TOKEN", "IG_USER_ID") if not os.environ.get(k)]
+        if missing:
+            print("이 창에는 " + ", ".join(missing) + " 가 아직 설정되지 않았습니다. 같은 창에서 먼저 넣고 다시 실행하세요:", file=sys.stderr)
+            print('  $env:IG_ACCESS_TOKEN="토큰"   (맥/리눅스: export IG_ACCESS_TOKEN="토큰")', file=sys.stderr)
+            print('  $env:IG_USER_ID="계정ID"      (계정 ID 는 --whoami 로 알 수 있음)', file=sys.stderr)
+            return 3
         rc = 0
         for i, raw in enumerate(args.check):
             if i:
