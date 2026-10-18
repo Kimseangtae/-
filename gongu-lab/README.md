@@ -41,7 +41,7 @@
 4. 토큰은 **환경변수로만** 둔다. 파일·채팅·저장소(공개)에 절대 붙여넣지 않는다.
    - 맥: `export IG_ACCESS_TOKEN="토큰"`   · 윈도우(PowerShell): `$env:IG_ACCESS_TOKEN="토큰"`
 5. 내 인스타 계정 ID 찾기: `python3 gongu-lab/ig_collect.py --whoami` → 출력된 `IG_USER_ID=…` 값을 같은 방식으로 환경변수에 넣는다.
-6. **시험**: `python3 gongu-lab/ig_collect.py --check 레퍼런스핸들` — 공식 API 로 이 계정의 캐러셀 슬라이드가 실제로 오는지 판정해 준다(저장 안 함).
+6. **시험**: `python3 gongu-lab/ig_collect.py --check 레퍼런스핸들1 레퍼런스핸들2` (여러 개를 띄어쓰기로 붙여 쓸 수 있습니다) — 공식 API 로 이 계정의 캐러셀 슬라이드가 실제로 오는지 판정해 준다(저장 안 함).
    "슬라이드가 온다"면 로그인 브라우저는 필요 없다. "안 온다"면 지표·캡션만 API 로 받고 슬라이드는 방법 2 로 보충한다.
 7. 수집: `python3 gongu-lab/ig_collect.py --all`
 

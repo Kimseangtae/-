@@ -22,7 +22,7 @@ gongu-lab: 인스타그램 레퍼런스 계정의 캐러셀(과 일반 게시물
   python3 ig_collect.py 핸들 --repair                # 슬라이드가 모자란 캐러셀만 다시 시도
   python3 ig_collect.py 핸들 --debug --show          # 응답 JSON 을 data/ig/_debug/ 에 저장 (막혔을 때 원인 확인용)
   python3 ig_collect.py --whoami                     # 토큰으로 IG_USER_ID(내 인스타 계정 ID) 찾기
-  python3 ig_collect.py --check 핸들                 # 공식 API 로 이 계정의 캐러셀 슬라이드가 실제로 오는지 시험 (저장 안 함)
+  python3 ig_collect.py --check 핸들1 핸들2 핸들3    # 공식 API 로 캐러셀 슬라이드가 실제로 오는지 여러 계정 시험 (저장 안 함)
 
 주의: 로그인 계정으로 짧은 시간에 많이 읽으면 인스타가 제한을 걸 수 있다. 게시물 사이 4~9초를 두고 기본 40개까지만 읽는다.
 """
@@ -579,7 +579,7 @@ def main() -> int:
     ap.add_argument("handle", nargs="?", help="인스타그램 핸들 (@ 없이)")
     ap.add_argument("--login", action="store_true", help="인스타 로그인 프로필 만들기")
     ap.add_argument("--whoami", action="store_true", help="IG_ACCESS_TOKEN 으로 IG_USER_ID 찾기")
-    ap.add_argument("--check", metavar="핸들", help="공식 API 로 캐러셀 슬라이드가 오는지 시험 (저장 안 함)")
+    ap.add_argument("--check", nargs="+", metavar="핸들", help="공식 API 로 캐러셀 슬라이드가 오는지 시험 (여러 개 가능, 저장 안 함)")
     ap.add_argument("--all", action="store_true", help="references.json 의 instagram 채널 전부")
     ap.add_argument("--source", choices=["auto", "graph", "web"], default="auto")
     ap.add_argument("--max-posts", type=int, default=40)
@@ -596,7 +596,12 @@ def main() -> int:
     if args.whoami:
         return whoami()
     if args.check:
-        return check_graph(clean_handle(args.check))
+        rc = 0
+        for i, raw in enumerate(args.check):
+            if i:
+                print()
+            rc = max(rc, check_graph(clean_handle(raw)))
+        return rc
     handles = handles_from_refs() if args.all else ([clean_handle(args.handle)] if args.handle else [])
     if not handles:
         print("핸들을 주거나 references.json 에 platform=instagram 채널을 넣으세요.", file=sys.stderr)
