@@ -98,7 +98,9 @@ python3 gongu-lab/plan_calendar.py status
 
 ### B4. 커밋
 `git add gongu-lab && git commit -m "gongu-lab: <캠페인ID> <날짜> 콘텐츠"` 후 현재 브랜치 push.
-슬라이드 이미지는 `.gitignore` 로 제외돼 있다(타인 저작물, 용량). `posts.json` 과 `analysis.json` 만 올라간다.
+슬라이드 이미지는 `.gitignore` 로 제외돼 있다(타인 저작물, 용량). `posts.json` 과 `analysis.json`, `analysis/` 보고서만 올라간다.
+**저장소가 공개일 때** `schedule.json`, `output/`, `calendar/`, `state/` 도 제외돼 있다(오픈 전 가격·일정·초안 유출 방지). 이 파일들을 `git add -f` 로 억지로 올리지 않는다.
+저장소가 비공개로 바뀌었다고 로빈님이 확인해 줄 때만 `.gitignore` 의 보호 블록을 지우고 올린다.
 
 ## 하지 않는 것
 - 레퍼런스의 문장·이미지·제품 주장 복사

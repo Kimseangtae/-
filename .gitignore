@@ -7,3 +7,9 @@ gongu-lab/logs/
 gongu-lab/data/ig/_debug/
 gongu-lab/data/ig/*/*/slide-*
 gongu-lab/data/ig/*/*/sheet.jpg
+# 공개 저장소 보호: 오픈 전 공구 정보(일정·가격·초안)는 커밋하지 않는다. 저장소를 비공개로 바꾼 뒤에만 아래 줄을 지운다.
+gongu-lab/schedule.json
+gongu-lab/calendar/
+gongu-lab/state/
+gongu-lab/output/*
+!gongu-lab/output/.gitkeep
