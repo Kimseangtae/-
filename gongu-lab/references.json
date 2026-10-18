@@ -5,5 +5,90 @@
     "youtube_channel_id": "UCMSz_yah88yZMC6js2p149A",
     "youtube_handle": "@robynstable"
   },
-  "channels": []
+  "channels": [
+    {
+      "platform": "instagram",
+      "handle": "ej_cook_",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "lovemomo0209",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "casa_rim",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "miracle_eunju119",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "__cookduck",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "fairy__mom",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "haneulina",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "dada_salrim",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "salimpop_official",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "emily.at_home",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "son2.mom",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    },
+    {
+      "platform": "instagram",
+      "handle": "ggmimomo",
+      "role": "gongu",
+      "enabled": true,
+      "note": "로빈님이 지정한 인스타 공구 레퍼런스"
+    }
+  ]
 }
