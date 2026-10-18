@@ -56,6 +56,25 @@ FIELD_LADDER = [  # 앞에서부터 시도, 400 오류가 나면 한 단계씩 �
     ("minimal", BASE),
 ]
 LONG_SLEEP = (4.0, 9.0)
+AUTH_ERROR_CODES = {10, 102, 190, 200, 803}  # 권한·토큰 문제. 필드를 줄여도 해결되지 않는다
+
+
+def graph_error_code(body: str) -> int | None:
+    m = re.search(r'"code"\s*:\s*(\d+)', body or "")
+    return int(m.group(1)) if m else None
+
+
+def graph_error_hint(message: str) -> str:
+    """오류 본문으로 원인별 안내를 만든다."""
+    code = graph_error_code(message)
+    if code == 190:
+        return "→ 토큰이 만료됐거나 잘못됐습니다. Graph API 탐색기에서 Generate Access Token 으로 새로 받아 환경변수에 다시 넣으세요."
+    if code in (10, 200):
+        return ("→ 이 앱에 필요한 권한이 없습니다. 앱의 '권한 및 기능'에서 instagram_manage_insights 를 추가하고, "
+                "Graph API 탐색기에서 그 권한을 체크해 토큰을 다시 받으세요. 그래도 같으면 로그인 브라우저 방식(--login)으로 갑니다.")
+    if code == 100:
+        return "→ 핸들 철자, 대상이 프로페셔널(비즈니스/크리에이터) 계정인지 확인하세요. 개인 계정은 공식 API 로 조회되지 않습니다."
+    return "→ 핸들 철자, 대상 계정 종류, 토큰 권한·만료를 확인하세요."
 
 
 # ---------------------------------------------------------------- 공통
@@ -171,6 +190,8 @@ def collect_graph(handle: str, max_posts: int) -> tuple[dict, list[dict], str]:
             return profile, posts[:max_posts], level
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace")[:300]
+            if graph_error_code(body) in AUTH_ERROR_CODES:
+                raise RuntimeError(f"Graph API 오류 {e.code}: {body}") from e
             if e.code == 400 and level != FIELD_LADDER[-1][0]:
                 print(f"[graph] '{level}' 필드 거절됨 → 줄여서 재시도: {body}", file=sys.stderr)
                 continue
@@ -552,7 +573,7 @@ def check_graph(handle: str) -> int:
         profile, posts, level = collect_graph(handle, 12)
     except RuntimeError as e:
         print(f"실패: {e}", file=sys.stderr)
-        print("→ 핸들 철자, 대상이 프로페셔널(비즈니스/크리에이터) 계정인지, 토큰 권한·만료를 확인하세요.")
+        print(graph_error_hint(str(e)))
         return 3
     car = [p for p in posts if p["kind"] == "carousel"]
     with_slides = [p for p in car if len(p["slides"]) > 1]
