@@ -21,6 +21,8 @@ gongu-lab: 인스타그램 레퍼런스 계정의 캐러셀(과 일반 게시물
   python3 ig_collect.py --all                        # references.json 의 instagram 채널 전부
   python3 ig_collect.py 핸들 --repair                # 슬라이드가 모자란 캐러셀만 다시 시도
   python3 ig_collect.py 핸들 --debug --show          # 응답 JSON 을 data/ig/_debug/ 에 저장 (막혔을 때 원인 확인용)
+  python3 ig_collect.py --whoami                     # 토큰으로 IG_USER_ID(내 인스타 계정 ID) 찾기
+  python3 ig_collect.py --check 핸들                 # 공식 API 로 이 계정의 캐러셀 슬라이드가 실제로 오는지 시험 (저장 안 함)
 
 주의: 로그인 계정으로 짧은 시간에 많이 읽으면 인스타가 제한을 걸 수 있다. 게시물 사이 4~9초를 두고 기본 40개까지만 읽는다.
 """
@@ -516,6 +518,56 @@ def run_handle(handle: str, args) -> int:
     return 0
 
 
+def whoami() -> int:
+    """토큰으로 연결된 페이지와 인스타 프로페셔널 계정 ID 를 보여준다."""
+    token = os.environ.get("IG_ACCESS_TOKEN", "")
+    if not token:
+        print("IG_ACCESS_TOKEN 환경변수가 없습니다.", file=sys.stderr)
+        return 3
+    url = f"https://graph.facebook.com/{GRAPH_VERSION}/me/accounts?" + urllib.parse.urlencode(
+        {"fields": "name,instagram_business_account{id,username}", "access_token": token})
+    try:
+        data = http_get_json(url)
+    except urllib.error.HTTPError as e:
+        print(f"오류 {e.code}: {e.read().decode('utf-8', errors='replace')[:300]}", file=sys.stderr)
+        return 3
+    pages = data.get("data", [])
+    if not pages:
+        print("연결된 페이스북 페이지가 없습니다. 인스타 계정을 페이지에 연결했는지, 토큰에 pages_show_list 권한이 있는지 확인하세요.")
+        return 1
+    found = False
+    for pg in pages:
+        ig = pg.get("instagram_business_account")
+        if ig:
+            found = True
+            print(f"페이지 '{pg.get('name')}' → 인스타 @{ig.get('username')}  IG_USER_ID={ig.get('id')}")
+        else:
+            print(f"페이지 '{pg.get('name')}' → 연결된 인스타 계정 없음")
+    return 0 if found else 1
+
+
+def check_graph(handle: str) -> int:
+    """공식 API 로 이 계정의 캐러셀 슬라이드가 실제로 오는지 시험한다. 파일은 저장하지 않는다."""
+    try:
+        profile, posts, level = collect_graph(handle, 12)
+    except RuntimeError as e:
+        print(f"실패: {e}", file=sys.stderr)
+        print("→ 핸들 철자, 대상이 프로페셔널(비즈니스/크리에이터) 계정인지, 토큰 권한·만료를 확인하세요.")
+        return 3
+    car = [p for p in posts if p["kind"] == "carousel"]
+    with_slides = [p for p in car if len(p["slides"]) > 1]
+    print(f"@{handle}: 팔로워 {profile.get('followers_count')} · 최근 {len(posts)}개 중 캐러셀 {len(car)}개 · 허용된 필드 단계 '{level}'")
+    hidden = sum(p["likes"] is None for p in posts)
+    print(f"좋아요 수 숨김 게시물 {hidden}개 / 슬라이드 목록을 받은 캐러셀 {len(with_slides)}개")
+    if car and len(with_slides) == len(car):
+        print("판정: 공식 API 만으로 슬라이드 이미지까지 받을 수 있습니다. 로그인 브라우저는 필요 없습니다.")
+    elif car:
+        print("판정: 공식 API 로는 슬라이드 이미지가 오지 않습니다. 지표·캡션만 API 로 받고 슬라이드는 로그인 브라우저(--login)로 보충해야 합니다.")
+    else:
+        print("판정 보류: 최근 게시물에 캐러셀이 없습니다. 캐러셀이 있는 다른 계정으로 다시 시험하세요.")
+    return 0
+
+
 def handles_from_refs() -> list[str]:
     cfg = load_json(REFS, {"channels": []})
     return [clean_handle(c.get("handle") or c.get("id", "")) for c in cfg.get("channels", [])
@@ -526,6 +578,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("handle", nargs="?", help="인스타그램 핸들 (@ 없이)")
     ap.add_argument("--login", action="store_true", help="인스타 로그인 프로필 만들기")
+    ap.add_argument("--whoami", action="store_true", help="IG_ACCESS_TOKEN 으로 IG_USER_ID 찾기")
+    ap.add_argument("--check", metavar="핸들", help="공식 API 로 캐러셀 슬라이드가 오는지 시험 (저장 안 함)")
     ap.add_argument("--all", action="store_true", help="references.json 의 instagram 채널 전부")
     ap.add_argument("--source", choices=["auto", "graph", "web"], default="auto")
     ap.add_argument("--max-posts", type=int, default=40)
@@ -539,6 +593,10 @@ def main() -> int:
     if args.login:
         web_login()
         return 0
+    if args.whoami:
+        return whoami()
+    if args.check:
+        return check_graph(clean_handle(args.check))
     handles = handles_from_refs() if args.all else ([clean_handle(args.handle)] if args.handle else [])
     if not handles:
         print("핸들을 주거나 references.json 에 platform=instagram 채널을 넣으세요.", file=sys.stderr)

@@ -31,6 +31,7 @@ python3 gongu-lab/ig_collect.py 핸들 --repair     # 슬라이드가 모자란 
 출력 마지막 줄의 "슬라이드 완전 수집 / 불완전" 개수를 반드시 확인한다. 불완전이 남으면 `--repair`, 그래도 안 되면
 `--debug --show` 로 원인을 보고 사용자에게 알린다. **불완전한 캐러셀은 분석 대상에서 빼고 그 사실을 보고서에 적는다.**
 로그인 프로필이 없으면 "`ig_collect.py --login` 필요" 한 줄 안내 후 중단.
+처음 쓰는 계정이면 먼저 `ig_collect.py --check 핸들` 로 공식 API 가 슬라이드를 주는지 확인하고 그 판정을 로빈님께 알린다.
 
 **인스타 릴스·유튜브 (세션 안에서 vidIQ 로)**
 - 릴스: `vidiq_ig_profile_reels`(최대 12개), `vidiq_instagram_tiktok_outlier_search`, `vidiq_watch_shortform_content`
