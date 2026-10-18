@@ -21,7 +21,9 @@ gongu-lab: 인스타그램 레퍼런스 계정의 캐러셀(과 일반 게시물
   python3 ig_collect.py --all                        # references.json 의 instagram 채널 전부
   python3 ig_collect.py 핸들 --repair                # 슬라이드가 모자란 캐러셀만 다시 시도
   python3 ig_collect.py 핸들 --debug --show          # 응답 JSON 을 data/ig/_debug/ 에 저장 (막혔을 때 원인 확인용)
-  python3 ig_collect.py --whoami                     # 토큰으로 IG_USER_ID(내 인스타 계정 ID) 찾기
+  python3 ig_collect.py --set-token                  # 토큰을 한 번 저장 (창을 닫아도 유지, 원하면 60일 장기 토큰으로 교환)
+  python3 ig_collect.py --doctor                     # 토큰·권한·계정·조회 가능 여부를 점검하고 다음에 할 일 1개를 알려줌
+  python3 ig_collect.py --whoami                     # 토큰으로 내 인스타 계정 ID 확인
   python3 ig_collect.py --check 핸들1 핸들2 핸들3    # 공식 API 로 캐러셀 슬라이드가 실제로 오는지 여러 계정 시험 (저장 안 함)
 
 주의: 로그인 계정으로 짧은 시간에 많이 읽으면 인스타가 제한을 걸 수 있다. 게시물 사이 4~9초를 두고 기본 40개까지만 읽는다.
@@ -44,6 +46,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DATA = HERE / "data" / "ig"
 PROFILE_DIR = HERE / ".browser-profile"
+SECRETS = HERE / ".ig_token.json"  # 토큰 저장 파일. 로빈님 PC 에만 있고 .gitignore 로 커밋 제외
 REFS = HERE / "references.json"
 KST = timezone(timedelta(hours=9))
 GRAPH_VERSION = os.environ.get("IG_GRAPH_VERSION", "v25.0")
@@ -57,6 +60,7 @@ FIELD_LADDER = [  # 앞에서부터 시도, 400 오류가 나면 한 단계씩 �
 ]
 LONG_SLEEP = (4.0, 9.0)
 AUTH_ERROR_CODES = {10, 102, 190, 200, 803}  # 권한·토큰 문제. 필드를 줄여도 해결되지 않는다
+REQUIRED_PERMS = ["instagram_basic", "instagram_manage_insights", "pages_show_list", "pages_read_engagement"]
 
 
 def graph_error_code(body: str) -> int | None:
@@ -135,6 +139,47 @@ def graph_page(ig_user_id: str, token: str, target: str, fields: str, limit: int
     return http_get_json(url)
 
 
+def graph_get(path: str, token: str, **params) -> dict:
+    url = f"https://graph.facebook.com/{GRAPH_VERSION}/{path}?" + urllib.parse.urlencode({**params, "access_token": token})
+    return http_get_json(url)
+
+
+def find_ig_account(token: str) -> tuple[str, str] | None:
+    """토큰에 연결된 페이지에서 인스타 프로페셔널 계정 (ID, 아이디) 를 찾는다."""
+    data = graph_get("me/accounts", token, fields="name,instagram_business_account{id,username}")
+    for pg in data.get("data", []):
+        ig = pg.get("instagram_business_account")
+        if ig and ig.get("id"):
+            return ig["id"], ig.get("username", "")
+    return None
+
+
+def save_secrets(data: dict) -> None:
+    SECRETS.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    try:
+        os.chmod(SECRETS, 0o600)
+    except OSError:
+        pass
+
+
+def load_creds(resolve: bool = True) -> dict:
+    """저장 파일(--set-token) → 환경변수 순으로 토큰·계정 ID 를 찾는다. 계정 ID 가 없으면 토큰으로 알아낸다."""
+    saved = load_json(SECRETS, {})
+    creds = {"token": saved.get("token") or os.environ.get("IG_ACCESS_TOKEN", ""),
+             "ig_user_id": saved.get("ig_user_id") or os.environ.get("IG_USER_ID", ""),
+             "expires_at": saved.get("expires_at")}
+    if creds["token"] and not creds["ig_user_id"] and resolve:
+        try:
+            found = find_ig_account(creds["token"])
+        except (urllib.error.URLError, OSError, ValueError):
+            found = None
+        if found:
+            creds["ig_user_id"] = found[0]
+            if saved.get("token") == creds["token"]:
+                save_secrets({**saved, "ig_user_id": found[0], "ig_username": found[1]})
+    return creds
+
+
 def norm_graph(m: dict) -> dict:
     permalink = m.get("permalink", "")
     mt = m.get("media_type")
@@ -170,9 +215,12 @@ def norm_graph(m: dict) -> dict:
 
 
 def collect_graph(handle: str, max_posts: int) -> tuple[dict, list[dict], str]:
-    ig_user_id, token = os.environ.get("IG_USER_ID", ""), os.environ.get("IG_ACCESS_TOKEN", "")
-    if not (ig_user_id and token):
-        raise RuntimeError("IG_USER_ID / IG_ACCESS_TOKEN 환경변수가 없습니다")
+    creds = load_creds()
+    ig_user_id, token = creds["ig_user_id"], creds["token"]
+    if not token:
+        raise RuntimeError("저장된 토큰이 없습니다. `--set-token` 으로 한 번 저장하세요")
+    if not ig_user_id:
+        raise RuntimeError("토큰에 연결된 인스타 프로페셔널 계정을 찾지 못했습니다. 인스타 계정이 페이스북 페이지에 연결돼 있는지 확인하세요")
     profile: dict = {}
     for level, fields in FIELD_LADDER:
         posts: list[dict] = []
@@ -438,20 +486,25 @@ def run_handle(handle: str, args) -> int:
     meta = {"source_level": None, "followers": store.get("followers")}
     new_posts: list[dict] = []
 
-    want_graph = args.source in ("auto", "graph") and os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")
+    creds = load_creds() if args.source in ("auto", "graph") else {}
+    want_graph = bool(creds.get("token") and creds.get("ig_user_id"))
     if args.source == "graph" and not want_graph:
-        print("graph 를 선택했지만 IG_USER_ID / IG_ACCESS_TOKEN 환경변수가 없습니다.", file=sys.stderr)
+        print("graph 를 선택했지만 저장된 토큰이 없습니다. `--set-token` 으로 저장하세요.", file=sys.stderr)
         return 3
+    graph_ok = False
     if want_graph and not args.repair:
         try:
             profile, new_posts, level = collect_graph(handle, args.max_posts)
             meta["source_level"] = f"graph:{level}"
             meta["followers"] = profile.get("followers_count") or meta["followers"]
             print(f"[graph] @{handle}: 게시물 {len(new_posts)}개, 필드 단계 '{level}'")
+            graph_ok = True
         except RuntimeError as e:
             print(f"[graph] 실패: {e}", file=sys.stderr)
+            print(graph_error_hint(str(e)), file=sys.stderr)
             if args.source == "graph":
                 return 3
+            print("[auto] 공식 API 가 막혀 로그인 브라우저 방식으로 전환합니다.", file=sys.stderr)
     for p in new_posts:
         by_code[p["shortcode"]] = merge_post(by_code.get(p["shortcode"]), p)
 
@@ -472,7 +525,7 @@ def run_handle(handle: str, args) -> int:
         return ctx_holder["ctx"]
 
     try:
-        if args.source == "web" or (not want_graph and not args.repair):
+        if args.source == "web" or (not graph_ok and not args.repair):
             ctx = get_ctx()
             page = ctx.new_page()
             tiles = web_list_codes(page, handle, args.max_posts)
@@ -541,9 +594,9 @@ def run_handle(handle: str, args) -> int:
 
 def whoami() -> int:
     """토큰으로 연결된 페이지와 인스타 프로페셔널 계정 ID 를 보여준다."""
-    token = os.environ.get("IG_ACCESS_TOKEN", "")
+    token = load_creds(resolve=False)["token"]
     if not token:
-        print("IG_ACCESS_TOKEN 환경변수가 없습니다.", file=sys.stderr)
+        print("저장된 토큰이 없습니다. `--set-token` 으로 먼저 저장하세요.", file=sys.stderr)
         return 3
     url = f"https://graph.facebook.com/{GRAPH_VERSION}/me/accounts?" + urllib.parse.urlencode(
         {"fields": "name,instagram_business_account{id,username}", "access_token": token})
@@ -589,6 +642,150 @@ def check_graph(handle: str) -> int:
     return 0
 
 
+def set_token() -> int:
+    """토큰을 확인해 PC 에 저장한다. 앱 ID·시크릿을 주면 60일짜리 장기 토큰으로 바꿔 저장한다(시크릿은 저장하지 않음)."""
+    import getpass
+    print("Graph API 탐색기에서 복사한 토큰을 붙여넣고 Enter 를 누르세요.")
+    print("(보안을 위해 붙여넣어도 화면에는 아무것도 보이지 않습니다. 정상입니다.)")
+    token = getpass.getpass("토큰: ").strip().strip('"')
+    if not token:
+        print("입력이 비었습니다.", file=sys.stderr)
+        return 1
+    try:
+        me = graph_get("me", token, fields="id,name")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:300]
+        print(f"토큰 확인 실패: {body}", file=sys.stderr)
+        print(graph_error_hint(body))
+        return 3
+    print(f"토큰 확인: {me.get('name')} 님 계정")
+    data = {"token": token, "saved_at": now_kst(), "long_lived": False, "expires_at": None}
+
+    print()
+    print("60일짜리 장기 토큰으로 바꾸면 매번 새로 받을 필요가 없습니다.")
+    print("앱 대시보드 → 앱 설정 → 기본 설정 화면의 '앱 ID' 를 입력하세요. 건너뛰려면 그냥 Enter.")
+    app_id = input("앱 ID: ").strip()
+    if app_id:
+        secret = getpass.getpass("같은 화면의 '앱 시크릿 코드' (화면에 안 보임, 저장하지 않음): ").strip()
+        url = f"https://graph.facebook.com/{GRAPH_VERSION}/oauth/access_token?" + urllib.parse.urlencode(
+            {"grant_type": "fb_exchange_token", "client_id": app_id, "client_secret": secret, "fb_exchange_token": token})
+        try:
+            r = http_get_json(url)
+            data["token"], data["long_lived"] = r["access_token"], True
+            if r.get("expires_in"):
+                data["expires_at"] = (datetime.now(KST) + timedelta(seconds=int(r["expires_in"]))).isoformat(timespec="seconds")
+            print("장기 토큰으로 교환했습니다." + (f" 만료: {data['expires_at'][:10]}" if data["expires_at"] else ""))
+        except (urllib.error.URLError, KeyError, ValueError) as e:
+            body = e.read().decode("utf-8", errors="replace")[:200] if isinstance(e, urllib.error.HTTPError) else str(e)
+            print(f"장기 토큰 교환 실패, 짧은 토큰으로 저장합니다: {body}", file=sys.stderr)
+
+    try:
+        found = find_ig_account(data["token"])
+    except urllib.error.URLError:
+        found = None
+    if found:
+        data["ig_user_id"], data["ig_username"] = found
+        print(f"인스타 계정 확인: @{found[1]} (ID {found[0]})")
+    else:
+        print("토큰에 연결된 인스타 프로페셔널 계정을 찾지 못했습니다. 인스타 계정이 페이스북 페이지에 연결돼 있는지 확인하세요.")
+    save_secrets(data)
+    print(f"\n저장 완료: {SECRETS}")
+    print("이제 PowerShell 창을 닫아도 토큰을 다시 넣지 않아도 됩니다. 다음: python gongu-lab\\ig_collect.py --doctor")
+    return 0
+
+
+def web_ready() -> tuple[bool, str]:
+    try:
+        import playwright  # noqa: F401
+    except ImportError:
+        return False, "로그인 브라우저 도구가 설치돼 있지 않습니다: pip install playwright pillow → python -m playwright install chromium"
+    if not PROFILE_DIR.exists():
+        return False, "로그인 프로필이 없습니다: python gongu-lab\\ig_collect.py --login (열린 창에서 인스타 로그인)"
+    return True, "로그인 브라우저 방식 준비됨"
+
+
+def doctor() -> int:
+    """토큰·권한·계정·조회 가능 여부를 차례로 점검하고 다음에 할 일 1개를 알려준다."""
+    print("== 인스타 수집 점검 ==")
+    w_ok, w_msg = web_ready()
+
+    def finish(api_ok: bool, action: str) -> int:
+        print(f"  {'✓' if w_ok else '·'} {w_msg}")
+        print(f"\n다음에 할 일: {action}")
+        return 0 if (api_ok or w_ok) else 1
+
+    creds = load_creds(resolve=False)
+    token = creds["token"]
+    if not token:
+        print("  ✗ 저장된 토큰이 없습니다")
+        return finish(False, "Graph API 탐색기에서 토큰을 받아 `python gongu-lab\\ig_collect.py --set-token`")
+    try:
+        me = graph_get("me", token, fields="id,name")
+        print(f"  ✓ 토큰 유효 ({me.get('name')} 님)")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:300]
+        print(f"  ✗ 토큰 확인 실패: {body}")
+        return finish(False, "Graph API 탐색기에서 Generate Access Token 으로 새 토큰을 받아 `--set-token` 으로 다시 저장")
+    except urllib.error.URLError as e:
+        print(f"  ✗ 인터넷 연결 문제로 확인하지 못했습니다: {e}")
+        return finish(False, "인터넷 연결을 확인하고 `--doctor` 를 다시 실행")
+    if creds.get("expires_at"):
+        try:
+            left = (datetime.fromisoformat(creds["expires_at"]) - datetime.now(KST)).days
+            print(f"  {'✓' if left > 7 else '△'} 토큰 만료까지 {left}일")
+        except ValueError:
+            pass
+
+    try:
+        perms = graph_get("me/permissions", token).get("data", [])
+        granted = {x.get("permission") for x in perms if x.get("status") == "granted"}
+    except urllib.error.URLError:
+        granted = set()
+    missing = [x for x in REQUIRED_PERMS if x not in granted]
+    print(f"  {'✓' if not missing else '✗'} 권한: " + ("필요한 권한 모두 있음" if not missing else "없는 권한 " + ", ".join(missing)))
+
+    app_id = ""
+    try:
+        app_id = graph_get("app", token, fields="id,name").get("id", "")
+    except urllib.error.URLError:
+        pass
+
+    try:
+        found = find_ig_account(token)
+    except urllib.error.URLError:
+        found = None
+    if not found:
+        print("  ✗ 토큰에 연결된 인스타 프로페셔널 계정이 없습니다")
+        return finish(False, "인스타 앱 → 프로필 편집 → 페이지 에서 페이스북 페이지를 연결한 뒤 토큰을 새로 받아 `--set-token`")
+    print(f"  ✓ 내 인스타 계정 @{found[1]} (ID {found[0]})")
+    if creds.get("ig_user_id") != found[0] and load_json(SECRETS, {}).get("token") == token:
+        save_secrets({**load_json(SECRETS, {}), "ig_user_id": found[0], "ig_username": found[1]})
+
+    refs = handles_from_refs()
+    target = refs[0] if refs else found[1]
+    try:
+        graph_page(found[0], token, target, "id,media_type", 1, None)
+        print(f"  ✓ 공식 API 로 @{target} 조회 성공")
+        return finish(True, "`python gongu-lab\\ig_collect.py --check 아이디들` 로 슬라이드까지 오는지 확인하거나 `--all` 로 수집 시작")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:300]
+        code = graph_error_code(body)
+        print(f"  ✗ 공식 API 로 @{target} 조회 실패 (오류 코드 {code})")
+    except urllib.error.URLError as e:
+        print(f"  ✗ 인터넷 연결 문제로 조회하지 못했습니다: {e}")
+        return finish(False, "인터넷 연결을 확인하고 `--doctor` 를 다시 실행")
+    if missing:
+        link = f"https://developers.facebook.com/apps/{app_id}/" if app_id else "https://developers.facebook.com/apps/"
+        return finish(False, f"앱 대시보드({link}) → 이용 사례 → 맞춤 설정 → 왼쪽 '권한 및 기능'에서 "
+                             f"{', '.join(missing)} 를 추가 → Graph API 탐색기에서 그 권한까지 체크해 토큰을 다시 받고 `--set-token`")
+    if code == 100:
+        return finish(False, f"@{target} 가 개인 계정이거나 아이디가 틀렸을 수 있습니다. references.json 의 다른 계정으로 `--check` 해 보세요")
+    # 권한은 다 있는데도 막힘: Meta 앱 검수가 필요한 상태로 본다. 로그인 브라우저로 우회
+    if w_ok:
+        return finish(False, "공식 API 는 앱 검수 없이는 막혀 있습니다. `python gongu-lab\\ig_collect.py --all` 을 실행하면 자동으로 로그인 브라우저 방식으로 수집합니다")
+    return finish(False, "공식 API 는 앱 검수 없이는 막혀 있습니다. 로그인 브라우저 방식으로 갑니다: " + w_msg)
+
+
 def handles_from_refs() -> list[str]:
     cfg = load_json(REFS, {"channels": []})
     return [clean_handle(c.get("handle") or c.get("id", "")) for c in cfg.get("channels", [])
@@ -599,7 +796,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("handle", nargs="?", help="인스타그램 핸들 (@ 없이)")
     ap.add_argument("--login", action="store_true", help="인스타 로그인 프로필 만들기")
-    ap.add_argument("--whoami", action="store_true", help="IG_ACCESS_TOKEN 으로 IG_USER_ID 찾기")
+    ap.add_argument("--set-token", action="store_true", help="토큰을 PC 에 저장 (원하면 장기 토큰으로 교환)")
+    ap.add_argument("--doctor", action="store_true", help="수집 준비 상태를 점검하고 다음에 할 일을 알려줌")
+    ap.add_argument("--whoami", action="store_true", help="저장된 토큰으로 내 인스타 계정 ID 확인")
     ap.add_argument("--check", nargs="+", metavar="핸들", help="공식 API 로 캐러셀 슬라이드가 오는지 시험 (여러 개 가능, 저장 안 함)")
     ap.add_argument("--all", action="store_true", help="references.json 의 instagram 채널 전부")
     ap.add_argument("--source", choices=["auto", "graph", "web"], default="auto")
@@ -614,14 +813,19 @@ def main() -> int:
     if args.login:
         web_login()
         return 0
+    if args.set_token:
+        return set_token()
+    if args.doctor:
+        return doctor()
     if args.whoami:
         return whoami()
     if args.check:
-        missing = [k for k in ("IG_ACCESS_TOKEN", "IG_USER_ID") if not os.environ.get(k)]
-        if missing:
-            print("이 창에는 " + ", ".join(missing) + " 가 아직 설정되지 않았습니다. 같은 창에서 먼저 넣고 다시 실행하세요:", file=sys.stderr)
-            print('  $env:IG_ACCESS_TOKEN="토큰"   (맥/리눅스: export IG_ACCESS_TOKEN="토큰")', file=sys.stderr)
-            print('  $env:IG_USER_ID="계정ID"      (계정 ID 는 --whoami 로 알 수 있음)', file=sys.stderr)
+        creds = load_creds()
+        if not creds["token"]:
+            print("저장된 토큰이 없습니다. 먼저 `python gongu-lab\\ig_collect.py --set-token` 으로 저장하세요.", file=sys.stderr)
+            return 3
+        if not creds["ig_user_id"]:
+            print("토큰에 연결된 인스타 계정을 찾지 못했습니다. `python gongu-lab\\ig_collect.py --doctor` 로 원인을 확인하세요.", file=sys.stderr)
             return 3
         rc = 0
         for i, raw in enumerate(args.check):

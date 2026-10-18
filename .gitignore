@@ -3,6 +3,7 @@ __pycache__/
 threads-watch/logs/
 threads-watch/.browser-profile/
 gongu-lab/.browser-profile/
+gongu-lab/.ig_token.json
 gongu-lab/logs/
 gongu-lab/data/ig/_debug/
 gongu-lab/data/ig/*/*/slide-*

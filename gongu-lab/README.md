@@ -38,12 +38,12 @@
 1. [Meta for Developers](https://developers.facebook.com) 에서 앱 생성 (Instagram 사용 설정 포함, Facebook 로그인 방식).
 2. [Graph API Explorer](https://developers.facebook.com/tools/explorer/) 에서 그 앱을 고르고 권한 `instagram_basic`, `instagram_manage_insights`, `pages_show_list`, `pages_read_engagement` 를 추가해 **사용자 액세스 토큰**을 만든다. 권한 목록은 [Business Discovery 문서](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/business_discovery) 기준이며 바뀔 수 있다.
 3. 짧은 토큰은 1시간 정도면 끝난다. 앱 설정의 앱 ID·앱 시크릿으로 **장기 토큰**으로 교환한다(Meta 의 `fb_exchange_token` 방식, 약 60일).
-4. 토큰은 **환경변수로만** 둔다. 파일·채팅·저장소(공개)에 절대 붙여넣지 않는다.
-   - 맥: `export IG_ACCESS_TOKEN="토큰"`   · 윈도우(PowerShell): `$env:IG_ACCESS_TOKEN="토큰"`
-5. 내 인스타 계정 ID 찾기: `python3 gongu-lab/ig_collect.py --whoami` → 출력된 `IG_USER_ID=…` 값을 같은 방식으로 환경변수에 넣는다.
-6. **시험**: `python3 gongu-lab/ig_collect.py --check 레퍼런스핸들1 레퍼런스핸들2` (여러 개를 띄어쓰기로 붙여 쓸 수 있습니다) — 공식 API 로 이 계정의 캐러셀 슬라이드가 실제로 오는지 판정해 준다(저장 안 함).
-   "슬라이드가 온다"면 로그인 브라우저는 필요 없다. "안 온다"면 지표·캡션만 API 로 받고 슬라이드는 방법 2 로 보충한다.
-7. 수집: `python3 gongu-lab/ig_collect.py --all`
+4. 토큰 저장 (한 번만): `python gongu-lab/ig_collect.py --set-token` → 토큰을 붙여넣는다(화면에 안 보이는 게 정상).
+   앱 ID·앱 시크릿 코드(앱 설정 → 기본 설정)를 넣으면 **60일짜리 장기 토큰**으로 바꿔 저장한다. 시크릿은 저장하지 않는다.
+   토큰은 `gongu-lab/.ig_token.json` 에만 저장되고 `.gitignore` 로 저장소에 올라가지 않는다. 창을 닫아도 다시 넣을 필요 없다. 내 인스타 계정 ID 도 자동으로 찾는다.
+5. **점검**: `python gongu-lab/ig_collect.py --doctor` — 토큰, 권한, 계정 연결, 레퍼런스 조회 가능 여부를 차례로 보고 **다음에 할 일 1개**를 알려준다. 빠진 권한 이름과 앱 대시보드 링크까지 짚어준다.
+6. **시험**: `python gongu-lab/ig_collect.py --check 레퍼런스핸들1 레퍼런스핸들2` — 슬라이드 이미지까지 오는지 계정별로 판정한다.
+7. 수집: `python3 gongu-lab/ig_collect.py --all` — 공식 API 가 막힌 계정은 **자동으로 로그인 브라우저 방식으로 전환**한다(방법 2 준비 필요).
 
 앱이 개발 모드인 상태에서 앱 관리자 본인 계정으로 쓰는 것은 보통 앱 검수 없이 되지만, 막히면 오류 메시지를 알려주면 원인을 같이 본다.
 **확인되지 않은 점**: 이 경로로 슬라이드(`children`)를 받을 수 있는지는 공식 문서에 없다. 6번 시험이 그 답이다. 수집기는 필드를 줄여가며 자동 재시도하고 어디까지 받았는지를 `posts.json` 의 `source_level` 에 남긴다.
