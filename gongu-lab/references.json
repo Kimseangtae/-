@@ -1,0 +1,9 @@
+{
+  "_설명": "공구 레퍼런스 채널 목록. platform 은 youtube | instagram | threads. youtube 는 channelId(UC…) 또는 handle, 나머지는 handle(@ 없이). role 은 공구 레퍼런스면 gongu, 일반 비교용이면 base. note 에 왜 보는지 한 줄.",
+  "own": {
+    "name": "로빈의밥상",
+    "youtube_channel_id": "UCMSz_yah88yZMC6js2p149A",
+    "youtube_handle": "@robynstable"
+  },
+  "channels": []
+}

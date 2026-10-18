@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 threads-watch/logs/
 threads-watch/.browser-profile/
+gongu-lab/.browser-profile/
+gongu-lab/logs/
+gongu-lab/data/ig/_debug/
+gongu-lab/data/ig/*/*/slide-*
+gongu-lab/data/ig/*/*/sheet.jpg
