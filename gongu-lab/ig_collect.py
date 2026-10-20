@@ -538,12 +538,21 @@ def run_handle(handle: str, args) -> int:
                                      "kind": "carousel" if t["carousel"] else ("reel" if t["reel"] else "image"),
                                      "slides": [], "source": "web-grid"}
 
-        kinds = ("carousel",) if args.carousel_only else ("carousel", "image")
-        todo = [c for c, p in by_code.items()
-                if p.get("kind") in kinds and not slides_complete(p, out_dir / c)]
+        # 1단계: 공식 API 가 준 슬라이드 주소는 로그인 없이 먼저 내려받는다 (분석 대상은 캐러셀뿐)
+        if not args.no_download:
+            for code, p in by_code.items():
+                if p.get("kind") == "carousel" and any(sl.get("url") and not sl.get("file") for sl in p.get("slides", [])):
+                    save_slides(p, out_dir / code, ctx_holder["ctx"])
+
+        # 2단계: 그래도 모자란 캐러셀만 로그인 브라우저로 보충한다
+        todo = [c for c, p in by_code.items() if p.get("kind") == "carousel" and not slides_complete(p, out_dir / c)]
         todo = todo[: args.max_posts]
         if todo and args.no_download:
             print(f"[info] --no-download: 보충 대상 {len(todo)}개는 건너뜀")
+            todo = []
+        if todo and ctx_holder["ctx"] is None and not PROFILE_DIR.exists() and args.source != "web":
+            print(f"[info] 공식 API 로 다 받지 못한 캐러셀 {len(todo)}개는 로그인 브라우저가 없어 건너뜁니다. "
+                  "필요하면 `--login` 후 `--repair` 로 보충하세요.", file=sys.stderr)
             todo = []
         if todo:
             ctx = get_ctx()
@@ -566,10 +575,6 @@ def run_handle(handle: str, args) -> int:
                     print(f"[warn] {code}: JSON 도 화면도 못 읽음 (--debug --show 로 확인)", file=sys.stderr)
                     continue
                 save_slides(by_code[code], out_dir / code, ctx_holder["ctx"])
-        if not args.no_download:  # graph 로 받은 주소 중 아직 파일이 없는 것
-            for code, p in by_code.items():
-                if p.get("kind") in ("carousel", "image") and any(s.get("url") and not s.get("file") for s in p.get("slides", [])):
-                    save_slides(p, out_dir / code, ctx_holder["ctx"])
     finally:
         if ctx_holder["ctx"]:
             ctx_holder["ctx"].close()
