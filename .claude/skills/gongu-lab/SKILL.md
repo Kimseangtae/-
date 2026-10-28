@@ -69,8 +69,10 @@ python3 gongu-lab/analyze_videos.py gongu-lab/data/videos/*.json --tags gongu-la
 ### B1. 일정 등록
 `gongu-lab/schedule.json` (형식은 `schedule.example.json`). 필수: id, product, category, appeal, open_date, **drawbacks 1개 이상**.
 로빈님이 말로 알려주면 대신 만든다. 빠진 값은 지어내지 말고 묻는다 (특히 가격, 수량, 단점, 마감일).
+공구가 여러 개 이어지면 `plan` 출력의 '겹침' 개수를 보고, 다른 공구 판매 기간에 걸리는 슬롯은 캠페인의 `offsets`(슬롯 id → 일수)로 옮긴다. 기본 타임라인(공구당 25개·롱폼 3개)이 혼자 운영하기에 무거우면 축소안을 **제안**하고, 로빈님이 승인하면 기본값으로 바꾼다.
 ```bash
-python3 gongu-lab/plan_calendar.py plan          # calendar/<ID>.md 생성, 빠진 정보는 알려주고 멈춤
+python3 gongu-lab/plan_calendar.py plan          # calendar/<ID>.md 생성. 날짜만 있어도 캘린더는 만들고, 글 작성에 필요한 정보(카테고리·소구점·단점)는 따로 알려줌
+python3 gongu-lab/plan_calendar.py plan --playbook playbook_lean.json   # 공구가 이어질 때: 공구당 18개·롱폼 1개 축소안
 ```
 
 ### B2. 제작
