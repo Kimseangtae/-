@@ -1,82 +1,110 @@
 {
-  "_설명": "공구 1건의 콘텐츠 타임라인. anchor 가 open 이면 오픈일, close 면 마감일 기준 offset(일)에 올린다. deliverables 는 그 날 만들 산출물. 레퍼런스 채널 분석 결과(analysis/ 폴더)가 나오면 slots 를 그 구조에 맞게 고친다. rule 은 대본·글 작성 때 그대로 지켜야 하는 것.",
-  "source": "기본값 (로빈님 지침의 공구 퍼널 + 검증형 6단계). 레퍼런스 분석 반영 전",
-  "updated": "2026-10-18",
+  "_설명": "공구 1건의 콘텐츠 타임라인(축소안, 공구당 18개·롱폼 1개). anchor 가 open 이면 오픈일, close 면 마감일 기준 offset(일)에 올린다. 공구가 이어져 겹치면 캠페인별 offsets 로 슬롯을 옮긴다. 이전 기본안(25개·롱폼 3개)은 playbook_full.json. 레퍼런스 분석 결과가 나오면 slots 를 그 구조에 맞게 고친다.",
+  "source": "축소안. 로빈님 승인 2026-10-29. 지난 공구(2026-10-21) 반응 분석: 키 콘텐츠 1편 + 쇼츠·커뮤니티 중심",
+  "updated": "2026-10-29",
   "deliverables": {
     "script": "유튜브 롱폼 대본 (6막 구성, 썸네일·제목 후보 먼저)",
     "longdesc": "유튜브 롱폼 설명글 (7단 구조 고정)",
-    "pin": "유튜브 고정 댓글 (정확히 3줄)",
+    "pin": "유튜브 고정 댓글 (정확히 3줄, 구매 링크 없음 — 오픈 전 예고용)",
     "pin_gongu": "유튜브 공구용 고정 댓글 (4단계 압축, 구매 링크 포함 3줄)",
     "thumb": "썸네일 문구 14~18자 후보 + 제목 후보 3개 이상",
     "shorts": "일반 쇼츠 설명글 (본 영상 유도, 외부 링크 금지)",
     "shorts_teaser": "공구 티저 쇼츠 설명글 (댓글 이벤트 CTA 허용, 외부 링크 금지)",
     "shorts_verify": "검증형 6단계 쇼츠 설명글 + 컷 구성",
-    "reels": "인스타 릴스 캡션 (해시태그 금지, 프로필 링크 CTA)",
     "reels_verify": "검증형 6단계 릴스 캡션 + 컷 구성 (해시태그 금지)",
-    "carousel": "인스타 캐러셀 슬라이드별 문구 + 캡션 (슬라이드 구조는 analysis/carousels 의 상위 패턴을 따른다)",
     "threads": "스레드 글 (스친이들 반말체, 생활 밀착/발견 공유/소신발언 중 하나)",
     "community": "유튜브 커뮤니티 글 (밥상 식구님들 존댓말)"
   },
   "slots": [
     {
-      "id": "edu1", "anchor": "open", "offset": -14, "label": "카테고리 교육 영상 1",
-      "deliverables": ["script", "longdesc", "pin", "thumb"],
-      "rule": "제품 언급 없이 카테고리 교육 100%. 시청자가 이 카테고리에서 속고 있던 지점 하나를 뒤집는다. 고정 댓글은 공감 선행형."
+      "id": "poll",
+      "anchor": "open",
+      "offset": -5,
+      "label": "카테고리 불편 수집 (투표·질문)",
+      "deliverables": [
+        "community"
+      ],
+      "rule": "제품 이름 없이 시청자가 이 카테고리에서 겪는 불편을 묻는다. 댓글은 오픈 글과 쇼츠의 소구 재료로 쓴다(시청자 표현 그대로 인용하지 말고 요약)."
     },
     {
-      "id": "short1", "anchor": "open", "offset": -12, "label": "일반 쇼츠 (교육 영상 요약)",
-      "deliverables": ["shorts"],
-      "rule": "교육 영상 핵심 1개만. CTA 는 반드시 '본 영상' 유도. 외부 링크·댓글 유도 금지."
+      "id": "key",
+      "anchor": "open",
+      "offset": -3,
+      "label": "키 콘텐츠 영상 (정규 업로드와 겸함)",
+      "deliverables": [
+        "script",
+        "longdesc",
+        "pin",
+        "thumb"
+      ],
+      "rule": "정보 다큐 90% + 제품 자연 노출. 오픈 전에 올려 오픈 시각에 링크가 바로 열리게 한다. 서론 40초 이내, 재료·준비물을 먼저 보여준다. 단점을 먼저 짚고 그럼에도 쓰는 이유. 고정 댓글은 오픈 일시만 안내(링크는 오픈일에 교체)."
     },
     {
-      "id": "thr1", "anchor": "open", "offset": -10, "label": "스레드 생활 밀착",
-      "deliverables": ["threads"],
-      "rule": "카테고리 불편을 생활 장면으로. 제품 이름 직접 언급 금지. 스친이들 반말체."
+      "id": "short_a",
+      "anchor": "open",
+      "offset": -2,
+      "label": "일반 쇼츠 (키 영상 하이라이트)",
+      "deliverables": [
+        "shorts"
+      ],
+      "rule": "키 영상 핵심 1개. CTA 는 반드시 '본 영상' 유도. 외부 링크·댓글 유도 금지."
     },
     {
-      "id": "edu2", "anchor": "open", "offset": -8, "label": "카테고리 교육 영상 2",
-      "deliverables": ["script", "longdesc", "pin", "thumb"],
-      "rule": "교육 90% + 제품군 노출 10%. 교육 1과 다른 각도(선택 기준 or 손해 비용). 고정 댓글은 손해 회피형."
+      "id": "notice",
+      "anchor": "open",
+      "offset": -1,
+      "label": "오픈 예고 (커뮤니티 + 티저 쇼츠)",
+      "deliverables": [
+        "community",
+        "shorts_teaser"
+      ],
+      "rule": "오픈 일시와 판매 기간만 예고하고 제품 장점은 말하지 않는다. 티저 쇼츠는 댓글 이벤트 CTA 허용, 링크 금지."
     },
     {
-      "id": "reels1", "anchor": "open", "offset": -7, "label": "릴스 (교육 요약)",
-      "deliverables": ["reels"],
-      "rule": "해시태그 금지. SEO 문장 + 공감 후킹. 프로필 링크 CTA."
+      "id": "open",
+      "anchor": "open",
+      "offset": 0,
+      "label": "오픈일 (고정댓글 교체·쇼츠·릴스·스레드)",
+      "deliverables": [
+        "pin_gongu",
+        "shorts_verify",
+        "reels_verify",
+        "threads"
+      ],
+      "rule": "키 영상 고정 댓글을 구매 링크 포함 3줄로 교체. 조회가 많은 기존 영상 3~5개의 고정 댓글도 이 제품에 맞는 문구로 교체(같은 문구를 수십 개 영상에 도배하지 않는다). 검증형 6단계 쇼츠·릴스."
     },
     {
-      "id": "tease", "anchor": "open", "offset": -5, "label": "공구 티저 쇼츠",
-      "deliverables": ["shorts_teaser"],
-      "rule": "티저. 오픈 일시만 예고하고 제품 장점은 말하지 않는다. 댓글 이벤트 CTA 허용, 외부 링크 금지."
+      "id": "mid",
+      "anchor": "open",
+      "offset": 2,
+      "label": "중간 점검 (질문 답변·실제 후기)",
+      "deliverables": [
+        "community",
+        "threads"
+      ],
+      "rule": "받은 질문과 망설이는 이유에 답한다. 후기는 실제로 받은 것만(지어내기·과장 금지). 후기가 없으면 질문 답변만."
     },
     {
-      "id": "car1", "anchor": "open", "offset": -4, "label": "인스타 캐러셀 예고",
-      "deliverables": ["carousel"],
-      "rule": "analysis/carousels 의 상위 반응 구조를 따른다. 마지막 장에 행동 1개."
+      "id": "last",
+      "anchor": "close",
+      "offset": -1,
+      "label": "마감 하루 전 알림",
+      "deliverables": [
+        "community",
+        "threads",
+        "shorts"
+      ],
+      "rule": "마감 일시를 정확히 적는다(일·시·분). 새 장점 추가 금지, 이미 말한 단점과 선택 기준을 다시 정리. 쇼츠는 '본 영상' 유도."
     },
     {
-      "id": "key", "anchor": "open", "offset": -3, "label": "키 콘텐츠 영상 (제품 자연 노출)",
-      "deliverables": ["script", "longdesc", "pin_gongu", "thumb"],
-      "rule": "정보 다큐 90% + 제품 자연 노출. 단점을 먼저 짚고 그럼에도 쓰는 이유 → CTA. 가격은 앵커링(개별 구매 vs 구성). 고정 댓글은 신뢰 구축형 기반 4단계."
-    },
-    {
-      "id": "thr2", "anchor": "open", "offset": -2, "label": "스레드 발견 공유/소신발언",
-      "deliverables": ["threads"],
-      "rule": "소신발언 또는 발견 공유 중 하나. 상식 뒤집기 + 참여형 마무리."
-    },
-    {
-      "id": "notice", "anchor": "open", "offset": -1, "label": "커뮤니티 오픈 예고",
-      "deliverables": ["community"],
-      "rule": "오픈 일시·한정 수량·알림 유도. 실제 조건만, 과장 금지."
-    },
-    {
-      "id": "open", "anchor": "open", "offset": 0, "label": "오픈일 (쇼츠·릴스·고정댓글 갱신)",
-      "deliverables": ["shorts_verify", "reels_verify", "pin_gongu", "threads"],
-      "rule": "검증형 6단계: 행동 차단 후킹 → 상식 뒤집기 → 손해의 3중 구체화 → 시각 증거 → 가족 보호 → 참여형 CTA. 고정 댓글에 구매 링크."
-    },
-    {
-      "id": "last", "anchor": "close", "offset": -1, "label": "마감 임박 알림",
-      "deliverables": ["community", "threads"],
-      "rule": "마감 일시와 남은 수량 등 실제 조건만. 새 장점 추가 금지, 이미 말한 단점과 선택 기준을 다시 정리."
+      "id": "final",
+      "anchor": "close",
+      "offset": 0,
+      "label": "마감 당일 (고정댓글 상단 갱신)",
+      "deliverables": [
+        "pin_gongu"
+      ],
+      "rule": "고정 댓글 맨 앞에 '오늘 마감'과 마감 시각을 넣는다. 3줄 유지."
     }
   ]
 }
