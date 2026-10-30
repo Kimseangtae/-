@@ -15,7 +15,8 @@
 | `references.json` | 레퍼런스 채널 목록 (instagram / youtube) |
 | `ig_collect.py` | 인스타 수집: 공식 API → 로그인 브라우저 순으로 시도, 슬라이드 이미지 저장, 장수 검증 |
 | `ig_analyze.py` | 캐러셀 반응 순위, 상위·하위 대기열, 분석 결과 검증, 패턴 통계, 슬라이드 모아보기 |
-| `analyze_videos.py` | 유튜브 영상 반응 분석 (vidIQ 결과 JSON 입력) |
+| `yt_research.py` | vidIQ 없이 유튜브 조사: 자동완성 검색어(키 불필요), 검색 상위 영상·채널 평균 대비 배수, 댓글, 채널 영상 |
+| `analyze_videos.py` | 유튜브 영상 반응 분석 (`yt_research.py channel --save` 또는 vidIQ 결과 JSON 입력) |
 | `schedule.json` | 공구 일정 (`schedule.example.json` 참고) |
 | `playbook.json` | 공구 타임라인 틀. 레퍼런스 분석 후 갱신 |
 | `plan_calendar.py` | 일정 → 캘린더, 오늘 할 일, 제작 지시서, 진행 현황 |
@@ -59,6 +60,14 @@ python3 gongu-lab/ig_collect.py 핸들 --show --max-posts 10   # 처음엔 10개
 **주의**: 인스타는 자동화된 열람에 제한을 걸 수 있다. 로빈님 본 계정 대신 **분석 전용 보조 계정**을 쓰는 것을 권한다.
 수집기는 게시물 사이 4~9초를 두고 기본 40개까지만 읽는다. 처음 한 번은 반드시 `--show --max-posts 10` 으로 시험한다.
 인스타 화면 구조는 자주 바뀌어, 이 경로는 실제 계정으로 돌려 보기 전에는 작동을 보증할 수 없다. 막히면 `--debug --show` 로 응답을 저장해 알려주면 고친다.
+
+## 유튜브 조사 키 (무료, 한 번만)
+`yt_research.py` 의 `search`·`comments`·`channel` 은 YouTube Data API 키가 필요하다(`suggest` 는 키 없이 된다).
+1. [Google Cloud 콘솔](https://console.cloud.google.com/)에서 프로젝트를 만들고 **YouTube Data API v3** 를 사용 설정한다.
+2. **사용자 인증 정보 → API 키 만들기**. 키 제한에서 YouTube Data API v3 만 허용해 두면 안전하다.
+3. PC: `python gongu-lab\yt_research.py set-key` 로 저장(화면에 안 보임, 커밋 제외).
+   클라우드 세션: 환경 설정의 환경변수에 `YOUTUBE_API_KEY` 로 넣는다. 키를 채팅에 붙여넣지 않는다.
+무료 할당량은 하루 10,000 단위(검색 1회 100, 나머지 1).
 
 ## 매일 쓰기
 - 수동: 저장소 폴더에서 `claude` → "오늘 올릴 것 알려줘"

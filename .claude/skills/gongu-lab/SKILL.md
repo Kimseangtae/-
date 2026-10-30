@@ -33,10 +33,19 @@ python3 gongu-lab/ig_collect.py 핸들 --repair     # 슬라이드가 모자란 
 로그인 프로필이 없으면 "`ig_collect.py --login` 필요" 한 줄 안내 후 중단.
 수집 전에 `ig_collect.py --doctor` 로 토큰·권한·계정·조회 가능 여부를 점검하고, 출력의 '다음에 할 일' 을 그대로 로빈님께 전한다. 토큰이 없거나 만료면 `--set-token` 안내. 처음 쓰는 계정은 `--check 핸들…` 로 슬라이드까지 오는지 확인한다. 공식 API 가 막힌 계정은 `--all` 실행 시 로그인 브라우저 방식으로 자동 전환된다.
 
-**인스타 릴스·유튜브 (세션 안에서 vidIQ 로)**
-- 릴스: `vidiq_ig_profile_reels`(최대 12개), `vidiq_instagram_tiktok_outlier_search`, `vidiq_watch_shortform_content`
-- 유튜브: `vidiq_channel_videos`(long/short, popular true/false) 결과를 `gongu-lab/data/videos/<채널>.json` 로 저장 → `analyze_videos.py` 로 분석.
-  설명·고정댓글은 `vidiq_video_comments`, 대본은 `vidiq_video_transcript`. 크레딧이 드니(호출당 5) 상위 영상 위주로.
+**유튜브 (vidIQ 없이, `yt_research.py`)**
+```bash
+python3 gongu-lab/yt_research.py suggest "김치 보관" --expand          # 사람들이 실제로 치는 검색어 (키 불필요)
+python3 gongu-lab/yt_research.py search "김치 보관 용기" --format long   # 검색 상위 영상 + 채널 평균 대비 배수
+python3 gongu-lab/yt_research.py comments <영상주소> --grep "곰팡이|냄새"  # 시청자 고민·질문
+python3 gongu-lab/yt_research.py channel @핸들 --save gongu-lab/data/videos/<채널>.json   # → analyze_videos.py
+```
+- API 키는 환경변수 `YOUTUBE_API_KEY`(클라우드 세션은 환경 설정의 비밀값/환경변수) 또는 `set-key` 로 저장한 것을 쓴다. 키를 채팅으로 받지 않는다.
+- 무료 할당량은 하루 10,000 단위. `search` 1회가 100이라 하루 약 90회까지. 나머지 명령은 1단위라 넉넉하다.
+- 키가 없으면 `suggest` 만 쓰고, 나머지는 키가 필요하다고 로빈님께 알린다. 결과를 지어내지 않는다.
+
+**인스타 릴스 (vidIQ, 크레딧이 있을 때만)**
+- `vidiq_ig_profile_reels`(최대 12개), `vidiq_instagram_tiktok_outlier_search`, `vidiq_watch_shortform_content`. 크레딧이 소진되면 재시도하지 않는다.
 - vidIQ 는 **캐러셀을 지원하지 않는다.** 캐러셀은 위 ig_collect 만 가능.
 
 ### A2. 캐러셀 판독 (핵심)
