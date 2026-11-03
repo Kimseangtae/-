@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>밥상스코프</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">밥상스코프 <span class="sub">숏폼 분석기</span></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="analyze">분석</button>
+      <button class="tab" data-tab="history">기록</button>
+      <button class="tab" data-tab="settings">⚙ 설정</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 분석 -->
+    <section id="tab-analyze" class="panel active">
+      <div class="card start">
+        <p class="hint">릴스·쇼츠·쓰레드 영상을 화면에 띄운 채로 누르세요. 단축키 <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></p>
+        <button id="btn-analyze" class="primary big">▶ 지금 보는 영상 분석</button>
+        <details class="opts">
+          <summary>측정 옵션</summary>
+          <label><input type="checkbox" id="opt-fast"> 2배속으로 빠르게 측정 (박자 정확도는 조금 떨어짐)</label>
+          <label class="block">댓글 직접 붙여넣기 (자동 수집이 안 될 때, 한 줄에 하나)
+            <textarea id="opt-comments" rows="3" placeholder="댓글 창의 글을 복사해 붙여넣으세요"></textarea>
+          </label>
+        </details>
+        <p class="note">측정하는 동안 영상이 처음부터 한 번 재생되고 소리가 납니다. 영상은 저장하지 않아요.</p>
+      </div>
+
+      <div id="progress" class="card hidden">
+        <div class="bar"><div id="progress-fill"></div></div>
+        <p id="progress-text">준비 중</p>
+      </div>
+
+      <div id="error" class="card error hidden"></div>
+      <div id="report"></div>
+    </section>
+
+    <!-- 기록 -->
+    <section id="tab-history" class="panel">
+      <div id="history-list"></div>
+    </section>
+
+    <!-- 설정 -->
+    <section id="tab-settings" class="panel">
+      <div class="card">
+        <h3>Claude API 키</h3>
+        <p class="hint">분석 두뇌로 Claude를 씁니다. 키는 이 컴퓨터의 크롬 확장 저장소에만 저장돼요.</p>
+        <input type="password" id="set-key" placeholder="sk-ant-로 시작하는 키" autocomplete="off">
+        <ol class="steps">
+          <li><a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> 에 구글 계정으로 가입</li>
+          <li>왼쪽 메뉴 <b>Billing</b>에서 카드 등록 후 5달러(약 7천 원) 충전</li>
+          <li><b>API Keys</b> → <b>Create Key</b> → 나온 키를 복사해서 위 칸에 붙여넣기</li>
+        </ol>
+        <h3>모델</h3>
+        <select id="set-model"></select>
+        <h3>분석 깊이</h3>
+        <select id="set-effort">
+          <option value="low">가볍게 (빠름·저렴)</option>
+          <option value="medium">보통 (기본)</option>
+          <option value="high">깊게 (느림·비쌈)</option>
+        </select>
+        <button id="btn-save" class="primary">저장</button>
+        <span id="save-msg" class="ok"></span>
+      </div>
+      <div class="card">
+        <h3>비용 감</h3>
+        <p class="hint">Opus 5.5 · 보통 기준으로 분석 1편 약 100~250원, 콘티 1개 약 100~200원 정도입니다. 결과 화면 아래에 실제 사용 금액(추정)이 표시돼요.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>
