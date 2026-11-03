@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "밥상스코프 - 숏폼 분석기",
+  "short_name": "밥상스코프",
+  "version": "0.1.0",
+  "description": "보고 있는 릴스·쇼츠·쓰레드 영상을 초 단위로 측정하고, 훅·감정·서사를 채점하고, 로빈의밥상 소재 콘티로 바꿔 줍니다.",
+  "permissions": ["sidePanel", "activeTab", "scripting", "storage", "unlimitedStorage", "tabs"],
+  "host_permissions": [
+    "https://www.instagram.com/*",
+    "https://www.threads.net/*",
+    "https://www.threads.com/*",
+    "https://www.youtube.com/*",
+    "https://m.youtube.com/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "밥상스코프 열기" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "commands": {
+    "analyze-current": {
+      "suggested_key": { "default": "Alt+Shift+R", "mac": "Alt+Shift+R" },
+      "description": "지금 보고 있는 숏폼 분석"
+    }
+  }
+}
