@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./gongu-lab/.ig_token.json)",
+      "Read(./gongu-lab/.yt_key.json)",
+      "Read(./content-hub/.threads_token.json)",
+      "Read(./content-hub/.webhook.json)",
+      "Edit(./gongu-lab/.ig_token.json)",
+      "Edit(./content-hub/.threads_token.json)"
+    ],
+    "ask": [
+      "Bash(python content-hub/hub.py queue approve:*)",
+      "Bash(python3 content-hub/hub.py queue approve:*)",
+      "Bash(python content-hub/hub.py run:*)",
+      "Bash(python3 content-hub/hub.py run:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/content-hub/hooks/lint_on_write.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
