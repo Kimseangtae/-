@@ -15,3 +15,9 @@ gongu-lab/calendar/
 gongu-lab/state/
 gongu-lab/output/*
 !gongu-lab/output/.gitkeep
+# content-hub: 소재·초안·예약·성과·토큰은 로컬에만 (공개 저장소)
+content-hub/data/
+content-hub/out/
+content-hub/.threads_token.json
+content-hub/.webhook.json
+content-hub/logs/

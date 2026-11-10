@@ -4,7 +4,7 @@ gongu-lab: 생성한 콘텐츠 파일이 로빈님 지침(절대 금지 목록·
 
 파일 이름 규칙: <날짜>_<슬롯>_<산출물>.md   예) 2026-11-17_key_script.md
 산출물 종류(마지막 토큰)가 검사 규칙을 정한다: script longdesc pin pin_gongu thumb shorts shorts_teaser
-shorts_verify reels reels_verify carousel threads community
+shorts_verify reels reels_verify carousel threads community tiktok x facebook linkedin dm
 파일 맨 위의 `<!-- ... -->` 주석 줄은 메모로 보고 글자 수·줄 수 계산에서 뺀다.
 
 종료코드: 오류가 있으면 1, 경고만 있으면 0.
@@ -21,7 +21,7 @@ from pathlib import Path
 
 MEMBERSHIP = "https://www.youtube.com/channel/UCMSz_yah88yZMC6js2p149A/join"
 KINDS = ["script", "longdesc", "pin", "pin_gongu", "thumb", "shorts", "shorts_teaser", "shorts_verify",
-         "reels", "reels_verify", "carousel", "threads", "community"]
+         "reels", "reels_verify", "carousel", "threads", "community", "tiktok", "x", "facebook", "linkedin", "dm"]
 
 FORBIDDEN = [  # (정규식, 설명)
     (re.compile(r"밥\s*깡\s*패"), "'밥깡패' 는 모든 형태 금지 (채널명은 로빈의밥상)"),
@@ -36,6 +36,14 @@ HASHTAG = re.compile(r"#[^\s#]+")
 
 GONGU_KINDS = {"pin_gongu", "shorts_teaser", "shorts_verify", "reels_verify"}
 KEY_KINDS = {"script", "pin_gongu", "carousel"}
+
+
+def x_length(text: str) -> int:
+    """X(트위터) 글자 수: 링크 23, 한글·한자·일어 2, 나머지 1."""
+    n = 23 * len(re.findall(r"https?://\S+", text))
+    for ch in re.sub(r"https?://\S+", "", text):
+        n += 2 if ord(ch) >= 0x1100 else 1
+    return n
 
 
 def body_lines(text: str) -> list[str]:
@@ -137,6 +145,35 @@ def lint(path: Path, kind: str | None = None) -> tuple[list[str], list[str]]:
             warns.append("스레드는 반말체 — 존댓말 어미가 보임")
         if tags and "#로빈의밥상" not in tags:
             errs.append("해시태그를 쓰면 #로빈의밥상 포함")
+
+    elif kind == "tiktok":
+        if "#로빈의밥상" not in tags:
+            errs.append("틱톡은 해시태그에 #로빈의밥상 필수")
+        if "프로필" not in body:
+            warns.append("틱톡 CTA 는 '프로필 링크를 눌러 확인해줘' 스타일")
+        if URL.search(body):
+            warns.append("틱톡 캡션의 링크는 눌리지 않음 — 프로필 링크로 안내")
+
+    elif kind == "x":
+        n = x_length(body)
+        if n > 280:
+            errs.append(f"X 글은 280 단위까지 (한글 1자=2, 링크=23 · 지금 {n})")
+        if tags and "#로빈의밥상" not in tags:
+            errs.append("해시태그를 쓰면 #로빈의밥상 포함")
+
+    elif kind in ("facebook", "linkedin"):
+        if tags and "#로빈의밥상" not in tags:
+            errs.append("해시태그를 쓰면 #로빈의밥상 포함")
+        if kind == "linkedin" and len(body) > 3000:
+            errs.append(f"링크드인 글은 3,000자까지 (지금 {len(body)}자)")
+        if "밥상 식구님" in body and kind == "linkedin":
+            warns.append("링크드인은 업계·사업 독자 — '밥상 식구님들' 호칭이 맞는지 확인")
+
+    elif kind == "dm":
+        if len(body) > 1000:
+            errs.append(f"인스타 DM 은 1,000자까지 (지금 {len(body)}자)")
+        if not URL.search(body):
+            warns.append("자동 DM 에 보낼 링크가 없음")
 
     elif kind == "community":
         if "밥상 식구님들" not in body:
