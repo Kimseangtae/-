@@ -42,7 +42,8 @@ pip install pillow mcp
 ```
 1. **스레드 토큰**: [Meta for Developers](https://developers.facebook.com) 의 기존 앱(robynstable)에 **Threads API 사용 사례**를 추가하고 권한 `threads_basic`, `threads_content_publish`, `threads_manage_insights` 로 토큰을 만든다.
    `python content-hub\hub.py set-threads-token` → 토큰 붙여넣기(화면에 안 보이는 게 정상). Threads 앱 시크릿을 넣으면 60일 토큰으로 바꾸고, 30일마다 `run` 이 알아서 새로 고친다.
-2. **인스타·페북 발행 권한**: Graph API Explorer 에서 기존 권한에 `instagram_content_publish`, `pages_manage_posts` 를 추가해 토큰을 다시 만들고 `python gongu-lab\ig_collect.py --set-token` 으로 저장. `--doctor` 로 확인.
+2. **인스타 점검 (가장 중요)**: `python content-hub\hub.py ig-check` — 토큰·권한·계정·이미지 주소를 차례로 보고 **다음에 할 일 1개**를 알려준다. 스레드 토큰이 없으면 스레드는 자동으로 "알림만" 방식이 된다.
+   **인스타·페북 발행 권한**: Graph API Explorer 에서 기존 권한에 `instagram_content_publish`, `pages_manage_posts` 를 추가해 토큰을 다시 만들고 `python gongu-lab\ig_collect.py --set-token` 으로 저장. `--doctor` 로 확인.
 3. **카드 이미지 주소**: 인스타 자동 발행은 이미지가 인터넷 주소여야 한다. 이 저장소는 공개라 오픈 전 이미지를 여기 올리면 안 된다.
    가장 쉬운 길: 카드는 손으로 올리고(알림만), 스레드·페북만 자동으로. 자동까지 원하면 비공개 이미지 저장소(예: Cloudflare R2 공개 버킷 주소)를 정해 `config.json` 의 `image_base_url` 에 넣는다.
 4. **휴대폰 알림**: 디스코드 서버 → 채널 설정 → 연동 → 웹후크 → 주소 복사 → `python content-hub\hub.py set-webhook`.

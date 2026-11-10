@@ -120,6 +120,15 @@ def ig_creds() -> dict:
     return load_creds()
 
 
+def ig_creds_quiet() -> dict:
+    """토큰 확인용. 계정 ID 를 찾으러 네트워크에 나가지 않는다(저장된 값·환경변수만)."""
+    try:
+        from ig_collect import load_creds
+        return load_creds(resolve=False)
+    except Exception:
+        return {}
+
+
 def _ig(path: str) -> str:
     return f"https://graph.facebook.com/{IG_VERSION}/{path}"
 

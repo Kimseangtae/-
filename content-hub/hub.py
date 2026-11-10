@@ -458,6 +458,21 @@ def image_urls_for(item_id: str, explicit: str | None) -> list[str]:
     return []
 
 
+def auto_mode(plat: str, image_urls: list[str]) -> str | None:
+    """자동 발행 가능하면 방식, 연결이 안 돼 있으면 None(= 시간이 되면 알림만)."""
+    import publishers
+    mode = PLATFORMS[plat]["auto"]
+    if mode == "threads" and not publishers.threads_creds()["token"]:
+        return None
+    if mode in ("instagram", "facebook"):
+        c = publishers.ig_creds_quiet()
+        if not (c.get("token") and c.get("ig_user_id")):
+            return None
+    if plat == "carousel" and not image_urls:
+        return None
+    return mode
+
+
 def cmd_queue(a) -> int:
     q = queue()
     if a.qcmd == "add":
@@ -478,9 +493,7 @@ def cmd_queue(a) -> int:
                 "approved_sha": "", "attempts": 0, "result": {}, "error": "", "metrics": {}}
         q["posts"].append(post)
         save(QUEUE, q)
-        mode = PLATFORMS[plat]["auto"]
-        if plat == "carousel" and not urls:
-            mode = None
+        mode = auto_mode(plat, urls)
         print(f"예약 {post['qid']}: {PLATFORMS[plat]['label']} · {post['at']} · {'자동 발행' if mode else '알림만(손으로 올림)'}")
         if config()["require_approval"]:
             print(f"승인해야 발행됩니다: hub.py queue approve {post['qid']}")
@@ -555,9 +568,7 @@ def cmd_run(a) -> int:
             notes.append(f"- {p['qid']} {label}: 승인 뒤 파일이 바뀌어 보류 → 확인 후 `hub.py queue approve {p['qid']}`")
             changed = True
             continue
-        mode = PLATFORMS[p["platform"]]["auto"]
-        if p["platform"] == "carousel" and not p["image_urls"]:
-            mode = None
+        mode = auto_mode(p["platform"], p["image_urls"])
         if not mode:
             p["status"] = "manual_due"
             notes.append(f"- {p['qid']} 지금 올릴 시간: {label} → `{p['file']}` (올린 뒤 `hub.py done {p['qid']} --url 주소`)")
@@ -769,6 +780,48 @@ def cmd_set_threads_token(a) -> int:
     return 0
 
 
+def cmd_ig_check(a) -> int:
+    """인스타 자동 발행에 필요한 것을 차례로 확인하고 다음에 할 일 1개를 알려준다. 글을 올리지는 않는다."""
+    import publishers
+    todo = []
+    c = publishers.ig_creds_quiet()
+    if not c.get("token"):
+        print("✗ 토큰 없음")
+        print("\n다음에 할 일: python gongu-lab\\ig_collect.py --set-token")
+        return 1
+    print("✓ 토큰 저장됨")
+    try:
+        perms = {x["permission"] for x in publishers._request("GET", publishers._ig("me/permissions"),
+                                                                {"access_token": c["token"]}).get("data", []) if x.get("status") == "granted"}
+    except publishers.PublishError as e:
+        print(f"✗ 토큰 조회 실패(만료됐거나 잘못된 토큰): {e}")
+        print("\n다음에 할 일: python gongu-lab\\ig_collect.py --set-token 으로 새 토큰 저장")
+        return 1
+    for need, why in (("instagram_content_publish", "인스타에 글·사진·캐러셀 올리기"),
+                      ("pages_manage_posts", "연결된 페이스북 페이지에 글 올리기(선택)"),
+                      ("instagram_manage_insights", "인스타 성과 숫자 가져오기"),
+                      ("pages_show_list", "계정 찾기")):
+        ok = need in perms
+        print(f"{'✓' if ok else '✗'} 권한 {need} — {why}")
+        if not ok and need in ("instagram_content_publish", "instagram_manage_insights", "pages_show_list"):
+            todo.append(f"토큰에 `{need}` 권한 추가")
+    print(f"{'✓' if c.get('ig_user_id') else '✗'} 인스타 계정 ID {c.get('ig_user_id') or '(못 찾음)'}")
+    base = config()["image_base_url"].strip()
+    print(f"{'✓' if base else '△'} 이미지 주소(image_base_url) {base or '비어 있음 → 카드 이미지는 손으로 올리고 알림만 받음'}")
+    if base:
+        try:
+            req = urllib.request.Request(base, method="HEAD", headers={"User-Agent": publishers.UA})
+            urllib.request.urlopen(req, timeout=15)
+            print("✓ 이미지 주소가 인터넷에서 열림")
+        except Exception as e:
+            print(f"△ 이미지 주소 접속 확인 못 함: {e}")
+    if todo:
+        print("\n다음에 할 일 1개: " + todo[0] + "  (Graph API Explorer 에서 권한 추가 후 `ig_collect.py --set-token` 으로 다시 저장)")
+        return 1
+    print("\n준비 끝. 시험은 카드 1장짜리 캐러셀이 아니라 사진 1장으로 먼저: hub.py queue add … carousel --image-urls 주소1개")
+    return 0
+
+
 def cmd_status(a) -> int:
     items, posts = inbox()["items"], queue()["posts"]
     count = lambda xs, k: {s: sum(1 for x in xs if x[k] == s) for s in sorted({x[k] for x in xs})}
@@ -840,6 +893,7 @@ def main() -> int:
     s.add_argument("--remix", action="store_true", help="반응 상위를 소재함에 되돌림"); s.set_defaults(fn=cmd_review)
     s = sub.add_parser("set-threads-token", help="스레드 토큰 저장"); s.set_defaults(fn=cmd_set_threads_token)
     s = sub.add_parser("set-webhook", help="휴대폰 알림(디스코드/슬랙 웹후크) 저장"); s.set_defaults(fn=cmd_set_webhook)
+    s = sub.add_parser("ig-check", help="인스타 자동 발행 준비 점검"); s.set_defaults(fn=cmd_ig_check)
     s = sub.add_parser("status", help="현황"); s.set_defaults(fn=cmd_status)
 
     for stream in (sys.stdout, sys.stderr):  # 윈도우 로그 파일로 보낼 때 ✓ 같은 글자에서 멈추지 않게
