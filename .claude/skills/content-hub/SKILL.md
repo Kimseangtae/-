@@ -7,7 +7,7 @@ description: >
 
 # content-hub 운영 절차
 
-도구: `content-hub/hub.py` (CLI), `cards.py`(카드뉴스), `clip.py`(롱폼→쇼츠), `mcp_server.py`(다른 AI 연결). 경로는 저장소 루트 기준.
+도구: `content-hub/hub.py` (CLI), `mcp_server.py`(다른 AI 연결). 카드 이미지·쇼츠 영상 제작은 PC 의 기존 스킬(robin-carousel·robin-cardnews·robin-shorts)이 맡고, 여기는 **글 작성·검사, 메타 공식 API 발행, 성과 수집**만 한다. 경로는 저장소 루트 기준.
 글쓰기 규칙은 `gongu-lab/guidelines.md`. 공구 일정 기반 제작은 gongu-lab 스킬이 맡고, 여기는 공구 밖의 일상 콘텐츠와 발행·성과를 맡는다.
 
 ## 1. 수집 (Collector)
@@ -25,7 +25,7 @@ python content-hub/hub.py add --text "…" | --url … | --file …    # 직접
 
 ## 3. 생성 (Creator) — /draft-content 와 같음
 `hub.py create ID --platforms …` → `out/<ID>/brief.md` 대로 파일 작성 → 훅이 자동 검사 → `hub.py check ID` 오류 0건.
-캐러셀은 `hub.py cards ID` (JPEG). 롱폼 → 쇼츠는 대본·자막을 읽고 구간을 골라 `python content-hub/clip.py 영상 --cuts … --title … --srt …`.
+카드 이미지·쇼츠 클립은 만들지 않는다(기존 스킬 담당). 만든 JPEG 주소가 있으면 예약 때 `--image-urls` 로 연결.
 큰 건(공구 오픈·키 콘텐츠)은 /brand-review 로 독립 검수 한 번 더.
 
 ## 4. 예약·발행 (Scheduler)

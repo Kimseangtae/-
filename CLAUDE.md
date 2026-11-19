@@ -7,7 +7,7 @@
 | 폴더 | 역할 | 스킬 |
 |---|---|---|
 | `gongu-lab/` | 공구: 레퍼런스 인스타 분석, 공구 일정 → 날짜별 제작, 지침 검사(`lint_content.py`), 유튜브 조사(`yt_research.py`) | gongu-lab |
-| `content-hub/` | 일상 콘텐츠: 소재 수집·선별 → 플랫폼별 생성 → 카드뉴스·쇼츠 클립 → 예약 발행 → 성과·재활용, MCP | content-hub |
+| `content-hub/` | 소재 수집·선별 → 플랫폼별 **글** 작성·검사 → 메타 공식 API 예약 발행 → 성과·재활용, MCP. (카드 이미지·쇼츠 영상 제작은 PC 의 기존 스킬 담당) | content-hub |
 | `threads-watch/` | 자기계발·사업 레퍼런스 스레드 감시 → 실행 과제 | threads-watch |
 | `.claude/skills/` | `/campaign-plan` `/draft-content` `/brand-review` `/performance-report` `/competitive-brief` | |
 

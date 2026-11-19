@@ -16,7 +16,7 @@ description: >
    (유튜브 '밥상 식구님들' 존댓말 / 스레드 '스친이들' 반말 / 인스타 존댓말+프로필 링크 / 틱톡 '프로필 링크를 눌러 확인해줘').
    파일을 저장하면 훅이 자동으로 지침 검사를 돌린다. 오류가 돌아오면 고쳐서 다시 저장.
 6. `python content-hub/hub.py check <ID>` 오류 0건 확인.
-7. 캐러셀이면 `python content-hub/hub.py cards <ID>` 로 카드 이미지까지.
+7. 카드 이미지·쇼츠 영상은 여기서 만들지 않는다(기존 스킬 robin-carousel·robin-cardnews·robin-shorts 담당). 이미지가 준비되면 예약 때 `--image-urls` 로 연결.
 8. 대화에는 플랫폼별 완성본을 그대로 붙이고, 끝에 대안·개선점을 짧게. 예약은 로빈님이 시간을 말하면 `hub.py queue add`.
 
 ## 지킬 것

@@ -8,7 +8,6 @@ content-hub: 소재 1개를 여러 플랫폼 콘텐츠로 만들어 예약 발�
              pick      사람이 고르기 (ID…) 또는 점수 상위 자동 선별 (--auto N)
   Creator    create    고른 소재 → 플랫폼별 작성 지시서(out/<ID>/brief.md). 글은 Claude(또는 MCP 로 연결한 AI)가 쓴다
              check     작성한 파일을 지침 검사 (gongu-lab/lint_content.py)
-             cards     캐러셀 문구 → 카드뉴스 이미지
   Scheduler  queue     예약 등록·목록·승인 (승인한 뒤 파일이 바뀌면 다시 승인해야 발행)
              run       예약 시각이 된 것 발행: 스레드·인스타·페이스북은 자동, 나머지는 '올릴 시간' 알림
              done      손으로 올린 것 완료 표시 (+게시물 주소 → 성과 수집 대상)
@@ -399,23 +398,6 @@ def cmd_check(a) -> int:
     return 1 if bad else 0
 
 
-def cmd_cards(a) -> int:
-    import cards
-    src = out_file(a.id, "carousel")
-    if not src.exists():
-        raise SystemExit(f"{src.relative_to(ROOT)} 이 없습니다. 캐러셀 문구를 먼저 쓰세요.")
-    spec = cards.parse_md(src.read_text(encoding="utf-8"))
-    for item in a.image or []:
-        num, _, rest = item.partition("=")
-        path, _, crop = rest.partition(":")
-        spec["slides"][int(num) - 1]["image"] = {"path": path, "crop": [int(v) for v in crop.split(",")] if crop else None}
-    w, h = (int(v) for v in a.size.lower().split("x"))
-    paths = cards.render(spec, OUT / a.id / "cards", (w, h), "jpg")
-    print(f"카드 {len(paths)}장 → {(OUT / a.id / 'cards').relative_to(ROOT)}")
-    print("인스타 자동 발행: 이 JPEG 들을 인터넷에서 열리는 곳에 올리고 `queue add ... --image-urls` 또는 config 의 image_base_url 을 쓰세요.")
-    return 0
-
-
 # ---------------------------------------------------------------- Scheduler
 
 def file_text(path: Path) -> str:
@@ -452,9 +434,9 @@ def image_urls_for(item_id: str, explicit: str | None) -> list[str]:
     if explicit:
         return [u.strip() for u in explicit.split(",") if u.strip()]
     base = config()["image_base_url"].rstrip("/")
-    cards_dir = OUT / item_id / "cards"
-    if base and cards_dir.exists():
-        return [f"{base}/{item_id}/{p.name}" for p in sorted(cards_dir.glob("slide_*.jpg"))]
+    img_dir = OUT / item_id / "images"   # 다른 스킬(robin-carousel 등)이 만든 JPEG 를 여기에 넣어 두면 순서대로 주소를 만든다
+    if base and img_dir.exists():
+        return [f"{base}/{item_id}/{p.name}" for p in sorted(img_dir.glob("*.jpg"))]
     return []
 
 
@@ -872,11 +854,6 @@ def main() -> int:
     s.set_defaults(fn=cmd_create)
 
     s = sub.add_parser("check", help="작성 파일 검사"); s.add_argument("id"); s.set_defaults(fn=cmd_check)
-
-    s = sub.add_parser("cards", help="캐러셀 문구 → 카드 이미지(JPEG)")
-    s.add_argument("id"); s.add_argument("--size", default="1080x1350")
-    s.add_argument("--image", action="append", help="N=사진경로[:x0,y0,x1,y1]")
-    s.set_defaults(fn=cmd_cards)
 
     s = sub.add_parser("queue", help="예약"); qs = s.add_subparsers(dest="qcmd", required=True)
     x = qs.add_parser("add"); x.add_argument("id"); x.add_argument("platform"); x.add_argument("--at", required=True)

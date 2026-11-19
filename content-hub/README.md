@@ -1,6 +1,7 @@
 # content-hub
 
-로빈님 콘텐츠 자동화 허브. **소재 수집 → 선별 → 소재 1개를 플랫폼별로 생성 → 예약 발행 → 성과 보고·재활용**.
+로빈님 콘텐츠 자동화 허브. **소재 수집 → 선별 → 소재 1개를 플랫폼별 글로 → 지침 검사 → 예약 발행(메타 공식 API) → 성과 보고·재활용**.
+카드 이미지·쇼츠 영상 제작은 PC 의 기존 스킬(robin-carousel·robin-cardnews·robin-shorts)이 맡는다. 이 허브는 그것과 겹치지 않는 부분만 둔다.
 사용은 클로드에게 말하면 된다: "소재 모아줘", "이걸로 플랫폼별로 써줘", "내일 저녁 7시 반에 스레드 예약", "성과 봐줘", "이 영상 쇼츠로 잘라줘".
 절차는 `../.claude/skills/content-hub/SKILL.md`. 마케팅 명령어 `/campaign-plan` `/draft-content` `/brand-review` `/performance-report` `/competitive-brief` 도 이 도구를 쓴다.
 
@@ -10,8 +11,8 @@
 |---|---|---|
 | Collector 소재 자동 수집 | 유튜브 자동완성(키 불필요), 유튜브 검색 상위(채널 평균 대비), 레퍼런스 인스타 반응 상위(경쟁사 스파이), 스레드 새 글 | `hub.py collect --suggest/--yt/--ig/--threads` |
 | Picker 입력·선별 | 직접 작성/링크/파일, 사람 선별, AI 선별(클로드가 이유를 붙여 추천), 점수 자동 선별, 재활용 | `hub.py add`, `inbox`, `pick`, `review --remix` |
-| Creator 브랜드 보이스 생성 | 페르소나 = `gongu-lab/guidelines.md`. 소재 → 플랫폼별 지시서 → 클로드(또는 MCP 로 연결한 ChatGPT·Gemini)가 작성 → 자동 검사 → 사람 검수 | `hub.py create`, `check`, 훅 `hooks/lint_on_write.py` |
-| 카드뉴스·릴스·클리핑 | 캐러셀 문구 → 카드 이미지(JPEG), 롱폼 → 세로 1080x1920 클립(흐린 배경/가운데 자르기, 제목·자막) | `cards.py` / `hub.py cards`, `clip.py` |
+| Creator 브랜드 보이스 생성 | 페르소나 = `gongu-lab/guidelines.md`. 소재 → 플랫폼별 지시서 → 클로드(또는 MCP 로 연결한 ChatGPT·Gemini)가 글 작성 → 자동 검사 → 사람 검수 | `hub.py create`, `check`, 훅 `hooks/lint_on_write.py` |
+| 카드 이미지·쇼츠 영상 | **여기서 만들지 않음** — 기존 스킬이 만든 JPEG 주소를 예약에 연결(`--image-urls`) | `queue add … --image-urls` |
 | Scheduler 멀티 플랫폼 예약 | 예약 → 로빈님 승인 → 시각이 되면 자동 발행 또는 휴대폰 알림. 승인 뒤 글이 바뀌면 보류 | `hub.py queue add/approve/list/cancel`, `run`, `run_hub.ps1` |
 | Reviewer 성과 | 스레드·인스타·페북 성과 자동 수집, 유튜브는 주소로 조회, 플랫폼 안 백분위, 보고서 md + CSV | `hub.py review` |
 | MCP | 클로드 데스크톱·ChatGPT·Gemini 가 소재함·작성·예약을 쓰게 함 (승인·발행은 빠짐) | `mcp_server.py` |
@@ -38,14 +39,14 @@
 ```powershell
 cd $HOME\Documents\robyn-threads
 git pull
-pip install pillow mcp
+pip install mcp
 ```
 1. **스레드 토큰**: [Meta for Developers](https://developers.facebook.com) 의 기존 앱(robynstable)에 **Threads API 사용 사례**를 추가하고 권한 `threads_basic`, `threads_content_publish`, `threads_manage_insights` 로 토큰을 만든다.
    `python content-hub\hub.py set-threads-token` → 토큰 붙여넣기(화면에 안 보이는 게 정상). Threads 앱 시크릿을 넣으면 60일 토큰으로 바꾸고, 30일마다 `run` 이 알아서 새로 고친다.
 2. **인스타 점검 (가장 중요)**: `python content-hub\hub.py ig-check` — 토큰·권한·계정·이미지 주소를 차례로 보고 **다음에 할 일 1개**를 알려준다. 스레드 토큰이 없으면 스레드는 자동으로 "알림만" 방식이 된다.
    **인스타·페북 발행 권한**: Graph API Explorer 에서 기존 권한에 `instagram_content_publish`, `pages_manage_posts` 를 추가해 토큰을 다시 만들고 `python gongu-lab\ig_collect.py --set-token` 으로 저장. `--doctor` 로 확인.
-3. **카드 이미지 주소**: 인스타 자동 발행은 이미지가 인터넷 주소여야 한다. 이 저장소는 공개라 오픈 전 이미지를 여기 올리면 안 된다.
-   가장 쉬운 길: 카드는 손으로 올리고(알림만), 스레드·페북만 자동으로. 자동까지 원하면 비공개 이미지 저장소(예: Cloudflare R2 공개 버킷 주소)를 정해 `config.json` 의 `image_base_url` 에 넣는다.
+3. **카드 이미지 주소** (카드는 기존 스킬이 만든 JPEG): 인스타 자동 발행은 이미지가 인터넷 주소여야 한다. 이 저장소는 공개라 오픈 전 이미지를 여기 올리면 안 된다.
+   가장 쉬운 길: 카드는 손으로 올리고(알림만), 스레드·페북만 자동으로. 자동까지 원하면 비공개 이미지 저장소(예: Cloudflare R2 공개 버킷 주소)를 정해 `config.json` 의 `image_base_url` 에 넣고, JPEG 를 `out/<소재ID>/images/` 에 순서대로 두면 주소를 자동으로 만든다. 주소를 직접 줄 때는 `queue add … --image-urls 주소1,주소2`.
 4. **휴대폰 알림**: 디스코드 서버 → 채널 설정 → 연동 → 웹후크 → 주소 복사 → `python content-hub\hub.py set-webhook`.
 5. **15분마다 자동 실행**: `run_hub.ps1` 맨 위 주석의 3줄을 PowerShell 에 붙여넣는다.
 6. (선택) **다른 AI 연결(MCP)**: 클로드 데스크톱 `설정 → 개발자 → 설정 편집` 의 `claude_desktop_config.json` 에
@@ -62,11 +63,9 @@ python content-hub\hub.py inbox                       # 클로드에게 "골라�
 python content-hub\hub.py pick s20261110-002
 python content-hub\hub.py create s20261110-002 --platforms threads,carousel,reels,shorts
 #   → 클로드가 out\s20261110-002\ 에 글을 쓰고 자동 검사
-python content-hub\hub.py cards s20261110-002
 python content-hub\hub.py queue add s20261110-002 threads --at "2026-11-10 19:30"
 python content-hub\hub.py queue approve q0001          # 승인은 로빈님이 직접
 python content-hub\hub.py review --remix               # 일주일에 한 번
-python content-hub\clip.py 원본.mp4 --cuts "03:10-03:52,12:05-12:50" --title "김장 김치가 위에서부터 시는 이유" --srt 원본.srt --out clips
 ```
 
 ## 안전장치
