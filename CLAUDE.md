@@ -10,6 +10,7 @@
 | `content-hub/` | 소재 수집·선별 → 플랫폼별 **글** 작성·검사 → 메타 공식 API 예약 발행 → 성과·재활용, MCP. (카드 이미지·쇼츠 영상 제작은 PC 의 기존 스킬 담당) | content-hub |
 | `threads-watch/` | 자기계발·사업 레퍼런스 스레드 감시 → 실행 과제 | threads-watch |
 | `.claude/skills/` | `/campaign-plan` `/draft-content` `/brand-review` `/performance-report` `/competitive-brief` | |
+| 운영센터 (claude.ai 아티팩트 "로빈의밥상 운영센터") | 공구·할 일·콘텐츠·라이브·네이버 임시저장·업체·상품·문의·주문정산·회고를 한 화면에서 관리. 데이터는 아티팩트 저장소의 `items` 컬렉션 | |
 
 ## 규칙
 - 이 저장소는 **공개**다. 공구 일정·가격·초안(`gongu-lab/schedule.json`, `output/`, `calendar/`, `state/`, `content-hub/data/`, `content-hub/out/`)과 토큰 파일은 커밋하지 않는다. 마진·수익 구조는 어떤 파일에도 쓰지 않는다.
@@ -17,6 +18,12 @@
 - 제품 사실(가격·수량·마감·효능·단점)은 지어내지 않는다. 없으면 묻는다.
 - 예약 승인(`hub.py queue approve`)과 발행(`hub.py run`)은 로빈님이 직접 한다.
 - 파이썬: 로빈님 PC(윈도우)는 `python` 을 쓴다. `python3` 는 쓰지 않는다.
+
+## 운영센터에 대신 등록할 때
+- 로빈님이 "○○ 공구 12/1~12/7 등록해줘", "내일 라이브 할 일 넣어줘"처럼 말하면 아티팩트 도구(`db_list`, `db_write`)로 `items/<id>` 문서를 쓴다. 페이지는 로빈님만 볼 수 있다.
+- 문서 형식: `type`(gongu·task·content·live·naver·vendor·product·cs·order·retro), `status`, `title` 은 필수. 날짜는 `YYYY-MM-DD`. 공구는 `open`·`close`, 나머지는 `date`. 공구에 묶을 때는 `gongu` 에 공구 문서 id.
+- 기존 문서를 고칠 때는 먼저 읽어서 버전을 확인한다. 지우기는 로빈님이 말했을 때만.
+- 가격·수량·마감·단점은 로빈님이 말한 것만 넣는다. 저장소 데이터(정산금·문의 내용)는 이 공개 저장소의 어떤 파일에도 옮겨 적지 않는다.
 
 ## 작업 원칙 (로빈님 PC 설정 안내 2026-11-10 반영)
 - **게시·외부 공개·삭제는 로빈님이 미리보기를 보고 승인한 뒤에만** 한다. 승인 전에는 파일·초안까지만.
