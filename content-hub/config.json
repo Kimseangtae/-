@@ -1,0 +1,12 @@
+{
+  "_설명": "content-hub 설정. 키워드가 들어간 소재는 점수가 오른다(최대 +30). exclude 단어가 든 자동 수집 소재는 버린다. image_base_url 을 채우면 카드 JPEG 주소를 자동으로 만든다(주소/<소재ID>/slide_01.jpg).",
+  "keywords": ["김장", "김치", "보관", "동치미", "반찬", "냉장고", "살림", "주방", "공구", "제철"],
+  "keyword_boost": 10,
+  "exclude": ["김장훈"],
+  "require_approval": true,
+  "default_platforms": ["threads", "carousel", "reels", "shorts", "community"],
+  "threads_handles": [],
+  "ig_min_score": 70,
+  "image_base_url": "",
+  "retry_limit": 3
+}
