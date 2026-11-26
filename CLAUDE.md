@@ -21,7 +21,7 @@
 
 ## 운영센터에 대신 등록할 때
 - 로빈님이 "○○ 공구 12/1~12/7 등록해줘", "내일 라이브 할 일 넣어줘"처럼 말하면 아티팩트 도구(`db_list`, `db_write`)로 `items/<id>` 문서를 쓴다. 페이지는 로빈님만 볼 수 있다.
-- 문서 형식: `type`(gongu·task·content·live·naver·vendor·product·cs·order·retro), `status`, `title` 은 필수. 날짜는 `YYYY-MM-DD`. 공구는 `open`·`close`, 나머지는 `date`. 공구에 묶을 때는 `gongu` 에 공구 문서 id.
+- 문서 형식: `type`(gongu·task·content·live·naver·vendor·product·cs·order·retro), `status`, `title` 은 필수. 날짜는 `YYYY-MM-DD`. 공구는 `open`·`close`, 나머지는 `date`. 공구에 묶을 때는 `gongu` 에 공구 문서 id. 고객 문의는 `cstype`(배송·교환·반품·사용법·상품 불량·주문 변경·취소·기타)을 넣으면 '성과 한눈에'의 문의 유형 집계에 잡힌다.
 - 기존 문서를 고칠 때는 먼저 읽어서 버전을 확인한다. 지우기는 로빈님이 말했을 때만.
 - 가격·수량·마감·단점은 로빈님이 말한 것만 넣는다. 저장소 데이터(정산금·문의 내용)는 이 공개 저장소의 어떤 파일에도 옮겨 적지 않는다.
 
